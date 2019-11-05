@@ -14,7 +14,7 @@ We encounter the room reservation problem every day, while the existing solution
  
 ## Technical Description
 ### Infrastucture
-![Project Structure](././readmeImages/structure.png)
+![Project Structure](././readmeImages/server-structure.png)
 
 
 ### Database
