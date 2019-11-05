@@ -27,9 +27,9 @@ For database selection, we decide to use Redis for client-server communication s
 
 ### Priority Chart
 |Priority | User| Description  |  Implementation |
-|---|---|---|---|---|
+|---|---|---|---|
 |P0 | As a user | I want to search and see which room is available for my own purposes (study, meeting, demonstration, etc.) | The server will receive a **Get** response at /v1/roomSearch, then the server will response as a list of available rooms based on the query|
-|P0 |As a user |I want to reserve a room for a specific time | The server will receive a Patch response at /v1/roomReserve, then the server will try to update the reserve information in the user-room database and return a reservation result|
+|P0 |As a user |I want to reserve a room for a specific time | The server will receive a **Patch** response at /v1/roomReserve, then the server will try to update the reserve information in the user-room database and return a reservation result|
 |P0|As a person|I want to register as a user for using the reservation system|The server will receive a **Post** response at /v1/register, then the server will try to register the person in the user-room database and return the registration result|
 |P1|As an admin|I want to add new rooms or new equipment in a room| The server will receive a **Post** request at /v1/updateStatus, then the server will try to add a room/equipment in the user-room database, add the status of the equip/room and return the update result.|
 |P1|As a user|I want to report equipment in a room has issues|The server will receive a **Post** request at /v1/reportIssue, then the server will try to add an issue in the user-room database and return the update result|
