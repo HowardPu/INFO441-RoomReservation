@@ -149,5 +149,8 @@ Calling this port will initiate the stored procedure usp_updateUser in the user-
 
 </br>
 
+### Clients
+For the client side, there will be 2 pages - the user profile page and the home page. In the home page, there will be 3 sections: Search/Filter Section, Available Rooms Section, and the User Information(can navigate to the user profile page) Section. 
+
 ## Reference
 Symmank, Rebecca(2019). “How to Calculate the Cost of One Empty Conference Room.” IOFFICE, www.iofficecorp.com/blog/empty-conference-room-cost.
