@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	M "INFO441-RoomReservation/servers/reservation/models"
