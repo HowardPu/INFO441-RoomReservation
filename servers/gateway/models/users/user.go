@@ -2,8 +2,6 @@ package users
 
 import (
 	"crypto/md5"
-	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"net/mail"
@@ -13,22 +11,17 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//gravatarBasePhotoURL is the base URL for Gravatar image requests.
-//See https://id.gravatar.com/site/implement/images/ for details
-const gravatarBasePhotoURL = "https://www.gravatar.com/avatar/"
-
 //bcryptCost is the default bcrypt cost to use when hashing passwords
 var bcryptCost = 13
+var RegUserType = "NORMAL"
 
 //User represents a user account in the database
 type User struct {
-	ID        int64  `json:"id"`
-	Email     string `json:"-"` //never JSON encoded/decoded
-	PassHash  []byte `json:"-"` //never JSON encoded/decoded
-	UserName  string `json:"userName"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	PhotoURL  string `json:"photoURL"`
+	ID       int64  `json:"userID"`
+	Email    string `json:""`  //never JSON encoded/decoded
+	PassHash []byte `json:"-"` //never JSON encoded/decoded
+	UserName string `json:"userName"`
+	Type     string `json:"userType"`
 }
 
 //Credentials represents user sign-in credentials
@@ -43,14 +36,6 @@ type NewUser struct {
 	Password     string `json:"password"`
 	PasswordConf string `json:"passwordConf"`
 	UserName     string `json:"userName"`
-	FirstName    string `json:"firstName"`
-	LastName     string `json:"lastName"`
-}
-
-//Updates represents allowed updates to a user profile
-type Updates struct {
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
 }
 
 //Validate validates the new user and returns an error if
@@ -87,23 +72,8 @@ func (nu *NewUser) Validate() error {
 }
 
 //ToUser converts the NewUser to a User, setting the
-//PhotoURL and PassHash fields appropriately
+//User type and PassHash fields appropriately
 func (nu *NewUser) ToUser() (*User, error) {
-	//TODO: call Validate() to validate the NewUser and
-	//return any validation errors that may occur.
-	//if valid, create a new *User and set the fields
-	//based on the field values in `nu`.
-	//Leave the ID field as the zero-value; your Store
-	//implementation will set that field to the DBMS-assigned
-	//primary key value.
-	//Set the PhotoURL field to the Gravatar PhotoURL
-	//for the user's email address.
-	//see https://en.gravatar.com/site/implement/hash/
-	//and https://en.gravatar.com/site/implement/images/
-
-	//TODO: also call .SetPassword() to set the PassHash
-	//field of the User to a hash of the NewUser.Password
-
 	err := (*nu).Validate()
 
 	if err != nil {
@@ -125,42 +95,11 @@ func (nu *NewUser) ToUser() (*User, error) {
 	userRef.Email = emailTrim
 	emailLower := strings.ToLower(emailTrim)
 	io.WriteString(h, emailLower)
-	imageURL := gravatarBasePhotoURL + hex.EncodeToString(h.Sum(nil))
 
 	userRef.ID = 0
-	userRef.PhotoURL = imageURL
 	userRef.UserName = strings.TrimSpace(newUserDat.UserName)
-	userRef.FirstName = strings.TrimSpace(newUserDat.FirstName)
-	userRef.LastName = strings.TrimSpace(newUserDat.LastName)
-
+	userRef.Type = RegUserType
 	return &userRef, nil
-}
-
-//FullName returns the user's full name, in the form:
-// "<FirstName> <LastName>"
-//If either first or last name is an empty string, no
-//space is put between the names. If both are missing,
-//this returns an empty string
-func (u *User) FullName() string {
-	//TODO: implement according to comment above
-
-	result := ""
-
-	fName := (*u).FirstName
-	lName := (*u).LastName
-
-	if len(fName) != 0 {
-		result += fName
-	}
-
-	if len(lName) != 0 {
-		if len(result) != 0 {
-			result += " "
-		}
-		result += lName
-	}
-
-	return result
 }
 
 //SetPassword hashes the password and stores it in the PassHash field
@@ -188,24 +127,4 @@ func (u *User) Authenticate(password string) error {
 	err := bcrypt.CompareHashAndPassword((*u).PassHash, []byte(password))
 
 	return err
-}
-
-//ApplyUpdates applies the updates to the user. An error
-//is returned if the updates are invalid
-func (u *User) ApplyUpdates(updates *Updates) error {
-	//TODO: set the fields of `u` to the values of the related
-	//field in the `updates` struct
-
-	if updates == nil {
-		return errors.New("Cannot update user")
-	}
-
-	updateDat := *updates
-	fName := strings.TrimSpace(updateDat.FirstName)
-	lName := strings.TrimSpace(updateDat.LastName)
-
-	(*u).FirstName = fName
-	(*u).LastName = lName
-
-	return nil
 }

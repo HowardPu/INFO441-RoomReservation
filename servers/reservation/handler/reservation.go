@@ -10,7 +10,6 @@ func RoomSearchHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Please Sign in", http.StatusUnauthorized)
 		return
 	}
-
 }
 
 func RoomReserveHandler(w http.ResponseWriter, r *http.Request) {

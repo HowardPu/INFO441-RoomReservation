@@ -10,11 +10,9 @@ import (
 )
 
 type UserLite struct {
-	ID        int64  `json:"id"`
-	UserName  string `json:"userName"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	PhotoURL  string `json:"photoURL"`
+	ID       int64  `json:"userID"`
+	UserName string `json:"userName"`
+	Type     string `json:"userType"`
 }
 
 func (ctx *HandlerContext) CustomRouting(targets []string) func(r *http.Request) {

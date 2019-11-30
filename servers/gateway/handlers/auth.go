@@ -79,7 +79,7 @@ func (ctx *HandlerContext) UsersHandler(w http.ResponseWriter, r *http.Request) 
 func (ctx *HandlerContext) SpecificUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	// throw StatusMethodNotAllowed if the request method is not GET or PATCH
-	if r.Method != http.MethodGet && r.Method != http.MethodPatch {
+	if r.Method != http.MethodGet {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -111,35 +111,16 @@ func (ctx *HandlerContext) SpecificUserHandler(w http.ResponseWriter, r *http.Re
 
 	targetID := sessionUser.ID
 
-	if r.Method == http.MethodGet {
-		newUser, getErr := ctx.UserStore.GetById(targetID)
-		if getErr != nil {
-			http.Error(w, "User Not Found", http.StatusForbidden)
-			return
-		}
-
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-
-		user = *newUser
-	} else {
-		contentType := r.Header.Get("Content-Type")
-		if contentType != "application/json" {
-			http.Error(w, "Header must be application/json", http.StatusUnsupportedMediaType)
-			return
-		}
-
-		decoder := json.NewDecoder(r.Body)
-		update := U.Updates{}
-		decoder.Decode(&update)
-
-		newUser, _ := ctx.UserStore.Update(targetID, &update)
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-
-		user = *newUser
+	newUser, getErr := ctx.UserStore.GetById(targetID)
+	if getErr != nil {
+		http.Error(w, "User Not Found", http.StatusForbidden)
+		return
 	}
 
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	user = *newUser
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.Encode(user)
 	json, _ := json.Marshal(user)

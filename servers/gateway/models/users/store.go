@@ -22,10 +22,6 @@ type Store interface {
 	//the newly-inserted User, complete with the DBMS-assigned ID
 	Insert(user *User) (*User, error)
 
-	//Update applies UserUpdates to the given user ID
-	//and returns the newly-updated user
-	Update(id int64, updates *Updates) (*User, error)
-
 	//Delete deletes the user with the given ID
 	Delete(id int64) error
 }
