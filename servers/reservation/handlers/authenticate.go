@@ -13,9 +13,9 @@ func Authenticate(r *http.Request) *M.User {
 
 	if len(userInfo) > 0 {
 		fmt.Printf("User Logged in! %v \n", userInfo)
-		curUser := &M.User{}
+		curUser := M.User{}
 		json.Unmarshal([]byte(userInfo), &curUser)
-		return curUser
+		return &curUser
 	}
 	fmt.Printf("User haven't login")
 	return nil
