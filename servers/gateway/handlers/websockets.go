@@ -68,31 +68,18 @@ func (ctx *HandlerContext) WebsocketHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	authToken := authTokenQuery[0]
-	userID := userStore.ID
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("Fail to initialize websocket connection %v \n", err)
 		return
 	}
 	log.Printf("AUth toden: %v \n", authToken)
-	createErr := ctx.SocketStore.AddNewConnection(authToken, userID, conn)
+	createErr := ctx.SocketStore.AddNewConnection(authToken, conn)
 	if createErr != nil {
 		log.Printf("Fail to create websocket connection %v \n", createErr)
 		return
 	}
 	log.Println("End Handshake")
-}
-
-func (ctx *HandlerContext) EndLoop(authToken string, endLoop chan bool) {
-	conn := ctx.SocketStore.Connections[authToken].Connection
-	for {
-		messageType, _, err := conn.ReadMessage()
-		if err != nil || messageType == CloseMessage {
-			ctx.SocketStore.RemoveConnection(authToken)
-			endLoop <- true
-			return
-		}
-	}
 }
 
 //TODO: start a goroutine that connects to the RabbitMQ server,
@@ -165,14 +152,9 @@ func (ctx *HandlerContext) ListeningClientMessage() {
 }
 
 func (ctx *HandlerContext) EndClientConnection(authToken string) {
-	connHolder, found := ctx.SocketStore.Connections[authToken]
+	conn, found := ctx.SocketStore.Connections[authToken]
 	if !found {
 		log.Println("Connection Nor Found for this auth token")
-		return
-	}
-	conn := connHolder.Connection
-	if conn == nil {
-		log.Println("Websocket Conn is nul for this token")
 		return
 	}
 

@@ -1,13 +1,9 @@
-package reservations
+package models
 
 import (
 	"database/sql"
 	"errors"
-	"fmt"
-	"log"
 	"time"
-
-	M "INFO441-RoomReservation/servers/reservation/models"
 
 	_ "github.com/denisenkom/go-mssqldb"
 )
@@ -79,38 +75,15 @@ import (
 18: UpdateIssue(issueID int, updateType string, userName string) error
 	update issue of a room
 		updateType: confirm, solve
+
+19: GetAllEquipment() ([]string, error)
+	get all equipments
+
+20: DeleteEquipment(euipName string, userName string) (equipID int, error)
+
+21: get all reservations
 What we need
 */
-
-type Reservation struct {
-	ID          int    `json:"id"`
-	TranDate    string `json:"tranDate"`
-	ReserveDate string `json:"reserveDate"`
-	RoomName    string `json:"roomName"`
-	BeginTime   int    `json:"beginTime"`
-	EndTime     int    `json:"duration"`
-	RoomType    string `json:"roomType"`
-}
-
-type Room struct {
-	ID       int    `json:"id"`
-	RoomName string `json:"roomName"`
-	Capacity int    `json:"capacity"`
-	Floor    int    `json:"floor"`
-	RoomType string `json:"roomType"`
-}
-
-type Issue struct {
-	ID         int    `json:"id"`
-	RoomName   string `json:"roomName"`
-	CreateDate string `json:"createdate"`
-	Body       string `json:"body"`
-}
-
-type Equipment struct {
-	RoomEquipID int    `json:"roomEquipID"`
-	Name        string `json:"Name"`
-}
 
 type ReservationStore struct {
 	db *sql.DB
@@ -121,38 +94,6 @@ func NewReservationStore(db *sql.DB) *ReservationStore {
 	result := ReservationStore{}
 	result.db = db
 	return &result
-}
-
-func (s *ReservationStore) GetByUserName(username string) (*[]M.Room, error) {
-	insq := `
-		SELECT TOP 1 U.userID, U.email, U.userName, U.passHash, U.photoURL, UN.firstName, UN.lastName
-		FROM tblUser U
-		JOIN tblUserName UN ON U.userID = UN.userID
-		WHERE UN.endDate IS NULL AND U.userName  = ?`
-
-	rows, err := s.db.Query(insq, username)
-	if err != nil {
-		return nil, err
-	}
-
-	roomList := []M.Room{}
-
-	for rows.Next() {
-		var name, roomType, statusType string
-		var id, floor, capacity int
-		// Get values from row.
-		scanErr := rows.Scan(&id, &name, &floor, &capacity, &roomType, &statusType)
-		if scanErr != nil {
-			log.Printf("Can't scan query result with error: %v \n", scanErr)
-			return nil, scanErr
-		}
-
-		var room = M.Room{id, name, floor, capacity, roomType, statusType}
-		roomList = append(roomList, room)
-		fmt.Printf("ID: %d, Name: %s, Floor: %d, Capacity: %d, roomType: %s, statusType: %s, \n", id, name, floor, capacity, roomType, statusType)
-	}
-
-	return &roomList, nil
 }
 
 func (s *ReservationStore) ReleaseReservation(userName string, resID int) (string, error) {
@@ -667,6 +608,48 @@ func (s *ReservationStore) UpdateIssue(issueID int, updateType string, userName 
 	}
 	date := s.GetCurrentTime()
 	_, tranErr := s.db.Exec(transaction, issueID, date, userName)
+
+	return tranErr
+}
+
+func (s *ReservationStore) UpdateEquipName(oldname string, newname string, username string) error {
+	transaction := `
+		EXEC usp_updateEquipmentName
+		@oldName = ?,
+		@newName = ?,
+		@userName = ?
+	`
+
+	_, tranErr := s.db.Exec(transaction, oldname, newname, username)
+
+	return tranErr
+}
+
+func (s *ReservationStore) GetAllEquipment() ([]string, error) {
+	query := `SELECT equipName FROM tblEquipment`
+	equipInfo, err := s.db.Query(query)
+	defer equipInfo.Close()
+	if err != nil {
+		return nil, err
+	}
+	result := []string{}
+	for equipInfo.Next() {
+		var equipName string
+		scanErr := equipInfo.Scan(&equipName)
+		if scanErr != nil {
+			return result, scanErr
+		}
+		result = append(result, equipName)
+	}
+	return result, nil
+}
+
+func (s *ReservationStore) DeleteEquipment(equipName string, username string) error {
+	transaction := `
+		EXEC usp_deleteEquipment
+		@equipName = ?,
+		@userName = ?`
+	_, tranErr := s.db.Exec(transaction, equipName, username)
 
 	return tranErr
 }
