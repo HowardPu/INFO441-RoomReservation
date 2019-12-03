@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Switch, Route, Redirect} from 'react-router-do
 import User from './pages/UserBoard'
 import Admin from './pages/AdminBoard'
 import Signin from './pages/SigninPage'
-import Reserve from './pages/ReserveRoom'
+import Reserve from './pages/RoomDetailPage'
 import Signup from './pages/SignupPage'
 import './App.css';
 

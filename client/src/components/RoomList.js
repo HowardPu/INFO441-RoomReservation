@@ -9,7 +9,7 @@ const host = "http://localhost"
 const jsonHeader =  {
     'Authorization': localStorage.getItem('auth')
 }
-const getRoomURL = host + "v1/room"
+const getRoomURL = host + "/v1/room"
 
 const TestData = [{
     roomName: "Test",
@@ -28,14 +28,14 @@ class RoomList extends React.Component {
         super(props);
         this.state = {
             errMes: '',
-            data: TestData,
+            data: [],
             showRooms: false,
             name: '',
             floor: '',
             capacity: '',
             type: '',
             clickReserve: false,
-            reserveRoom: null,
+            reserveRoom: {},
         }
     }
 
@@ -44,14 +44,19 @@ class RoomList extends React.Component {
         this.setState({
             showRooms: true
         })
-        let userInput = {
-            roomName: this.state.name,
-            floor: this.state.floor,
-            capacity: this.state.capacity,
-            roomType: this.state.type
+        let roomName = this.state.name ? this.state.name : "*"
+        let roomType = this.state.type ? this.state.roomType : "*"
+        var url = `${getRoomURL}?roomname=${roomName}&roomtype=${roomType}`
+        if (this.state.floor) {
+            url = url + "&floor=" + this.status.floor
         }
-        // var data = this.getData(getRoomURL, userInput, jsonHeader);
-        // this.setState({data: data});
+
+        if (this.state.capacity) {
+            url = url + "&floor=" + this.status.capacity
+        }
+        console.log(url)
+        var data = this.getData(url, jsonHeader);
+        this.setState({data: data});
     }
 
     componentWillUnmount() {
@@ -123,12 +128,11 @@ class RoomList extends React.Component {
         })
     }
 
-    getData(url, userInput, headerInput) {
+    getData(url, headerInput) {
         fetch(url, {
             method: 'GET',
             mode: "cors",
             headers: headerInput, 
-            body: JSON.stringify(userInput)
         }).then(resp => {
             if (resp.ok) {
                 return resp.json();
@@ -150,7 +154,15 @@ class RoomList extends React.Component {
     render() {
         if (this.state.clickReserve && this.state.reserveRoom !== null) {
             console.log(this.state.reserveRoom)
-            return (<Redirect to={{pathname:'/reserve', state:this.state.reserveRoom}} />)
+            var passState = {
+                roomInfo: this.state.reserveRoom
+            };
+
+            if (this.props.newRes && 
+                this.props.newRes.roomName === this.state.reserveRoom.roomName) {
+                passState.newRes = this.props.newRes
+            }
+            return (<Redirect to={{pathname:'/reserve', state:passState}} />)
         }
         return (
             <section>

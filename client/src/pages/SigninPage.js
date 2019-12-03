@@ -21,12 +21,10 @@ class Signin extends React.Component {
     }
 
     emailOnChange(e) {
-        console.log(e.target.value)
         this.setState({email: e.target.value})
     }
 
     passOnChange(e) {
-        console.log(e.target.value)
         this.setState({password: e.target.value})
     }
 
@@ -42,7 +40,6 @@ class Signin extends React.Component {
                 email: this.state.email,
                 password: this.state.password
             }
-            console.log(userInput)
             this.checkSignin(userInput, jsonHeader);
         }
     }
