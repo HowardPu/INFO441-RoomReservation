@@ -97,6 +97,7 @@ func NewReservationStore(db *sql.DB) *ReservationStore {
 }
 
 func (s *ReservationStore) ReleaseReservation(userName string, resID int) (string, error) {
+	// throw error if reservation id is not positive
 	if resID <= 0 {
 		return "", errors.New("ID must be positive")
 	}
@@ -106,23 +107,28 @@ func (s *ReservationStore) ReleaseReservation(userName string, resID int) (strin
 		FROM tblReservation RE JOIN tblRoom R ON R.roomID = RE.roomID
 		WHERE RE.reservationID = ?`
 
+	// begin search
 	row, err := s.db.Query(query, resID)
 	if err != nil {
 		return "", errors.New("Cannot Execute Query")
 	}
 
+	// if no rows, return errors
 	if !row.Next() {
 		return "", errors.New("Room Not Found")
 	}
 
+	// get room name,
+	// throw error if cannot scan
 	roomName := ""
-
 	scanErr := row.Scan(&roomName)
-
 	if scanErr != nil {
 		return "", errors.New("Cannot Scan Room")
 	}
 
+	// call transaction
+	// execute it
+	// return any error if occurs
 	transaction := ` 
 		EXEC usp_releaseReservation
 		@ResID = ?,
@@ -136,22 +142,26 @@ func (s *ReservationStore) ReleaseReservation(userName string, resID int) (strin
 func (s *ReservationStore) ReserveRoom(userName string, roomName string, beginTime int,
 	duration int, reserveDate string) (int, error) {
 
+	// reject tran if the duration is not positive
 	if duration <= 0 {
 		return -1, errors.New("Duration must be positive")
 	}
 
+	// search the used time for this room at given date
+	// terminate tran if error occurs
 	usedTime, err := s.GetUsedTime(roomName, reserveDate)
-
 	if err != nil {
 		return -1, err
 	}
 
+	// check whether there is an overlap
+	// if it is, terminate transaction
 	overLapErr := s.CheckOverlap(usedTime, beginTime, duration)
-
 	if overLapErr != nil {
 		return -1, overLapErr
 	}
 
+	// execute transaction, return any error that occurs
 	transaction := ` 
 			EXEC usp_makeRoomReservation
 			@userName = ?,
@@ -182,9 +192,14 @@ func (s *ReservationStore) ReserveRoom(userName string, roomName string, beginTi
 }
 
 func (s *ReservationStore) CheckOverlap(usedTime *[49]int, startTime int, duration int) error {
+	// if duration is not positive, throw error
 	if duration <= 0 {
 		return errors.New("Duration must be positive")
 	}
+	// encode index as 1 (time 0000), 2 (time 0030), 3 (time 0100).....
+	// for the interval begin time + 1, + 2, .... + duration
+	// if the value is 1(already used)
+	// throw an error
 	for i := startTime + 1; i <= startTime+duration; i++ {
 		if usedTime[i] != 0 {
 			return errors.New("There is a overlap")
@@ -201,22 +216,24 @@ func (s *ReservationStore) CheckOverlap(usedTime *[49]int, startTime int, durati
 // 9 - 10 fine
 
 func (s *ReservationStore) GetUsedTime(roomName string, date string) (*[49]int, error) {
+
+	// search the room id
+	// terminate the query if id not found
 	roomID, getRoomErr := s.GetRoomID(roomName)
 	if getRoomErr != nil {
 		return nil, getRoomErr
 	}
 
+	// search all used time of a day
+	// return any error if occurs
 	timeQuery := `SELECT beginTime, endTime FROM tblReservation WHERE reserveDate = ? AND roomID = ?`
-
 	timeInfo, err := s.db.Query(timeQuery, date, roomID)
 	defer timeInfo.Close()
-
 	if err != nil {
 		return nil, err
 	}
 
 	result := [49]int{}
-
 	for timeInfo.Next() {
 		var beginTime int
 		var endTime int
@@ -224,6 +241,7 @@ func (s *ReservationStore) GetUsedTime(roomName string, date string) (*[49]int, 
 		if scanErr != nil {
 			return nil, scanErr
 		}
+		// record time interval into the array
 		for i := beginTime + 1; i <= endTime; i++ {
 			result[i] = result[i] + 1
 		}
@@ -233,6 +251,8 @@ func (s *ReservationStore) GetUsedTime(roomName string, date string) (*[49]int, 
 }
 
 func (s *ReservationStore) GetRoomID(roomName string) (int, error) {
+	// search roomid by room name
+	// return any error if noy found/ can't search
 	roomQuery := `SELECT TOP 1 roomID FROM tblRoom WHERE roomName = ?`
 
 	roomInfo, err := s.db.Query(roomQuery, roomName)
@@ -254,6 +274,8 @@ func (s *ReservationStore) GetRoomID(roomName string) (int, error) {
 }
 
 func (s *ReservationStore) GetUserID(userName string) (int, error) {
+	// get userID by username
+	// throw any error if the user not find/ cannot search
 	userQuery := `SELECT TOP 1 userID FROM tblUser WHERE userName = ?`
 
 	userInfo, err := s.db.Query(userQuery, userName)
@@ -275,11 +297,14 @@ func (s *ReservationStore) GetUserID(userName string) (int, error) {
 }
 
 func (s *ReservationStore) GetCurrentTime() string {
+	// get current date in the format of YY-MM-DD
 	currentTime := time.Now()
 	return currentTime.Format("2006-01-02")
 }
 
 func (s *ReservationStore) AddRoom(roomName string, floor int, capacity int, roomType string, userName string) (int, error) {
+	// add room to the db
+	// throw any error if tran failed
 	transaction := `
 		EXEC usp_createRoom
 		@roomName = ?,
@@ -299,25 +324,28 @@ func (s *ReservationStore) AddRoom(roomName string, floor int, capacity int, roo
 	return latestID, findErr
 }
 
-// delete room
-
 func (s *ReservationStore) DeleteRoom(roomName string, userName string) (int, error) {
+	// check room exist
+	// if not, terminate the transaction
 	roomID, getErr := s.GetRoomID(roomName)
 	if getErr != nil {
 		return -1, errors.New("Cannot find room")
 	}
+
+	// remove the room
+	// return any error if tran failed
 	transaction := `
 		EXEC usp_deleteRoom
 		@roomName = ?,
 		@userName = ?
 	`
-
 	_, tranErr := s.db.Exec(transaction, roomName, userName)
-
 	return roomID, tranErr
 }
 
 func (s *ReservationStore) AddEquipment(eqipName string, userName string) (int, error) {
+	// add equipment to a building
+	// return any error if the tran failed
 	transaction := `
 			EXEC usp_addEquipment
 			@equipName = ?,
@@ -334,6 +362,8 @@ func (s *ReservationStore) AddEquipment(eqipName string, userName string) (int, 
 }
 
 func (s *ReservationStore) AddEquipmentToRoom(equipName string, roomName string, userName string) (int, error) {
+	// add equipment to a room
+	// return any error if the tran failed
 	transaction := `
 		EXEC usp_addEquipmentToRoom
 		@equipName = ?,
@@ -353,6 +383,8 @@ func (s *ReservationStore) AddEquipmentToRoom(equipName string, roomName string,
 }
 
 func (s *ReservationStore) DeleteEquipmentInRoom(roomEquipID int, userName string) error {
+	// delete the equipment in a room
+	// return any error if the transaction failed
 	date := s.GetCurrentTime()
 	transaction := `
 		EXEC usp_removeEquipmentInRoom
@@ -364,6 +396,8 @@ func (s *ReservationStore) DeleteEquipmentInRoom(roomEquipID int, userName strin
 }
 
 func (s *ReservationStore) GetLatestInsertedID(tableName string) (int, error) {
+	// get id of latest insert row of a table
+	// return any err if the id cannot find
 	latestInsertedSQL := `SELECT IDENT_CURRENT(?)`
 
 	lastestID, lastestErr := s.db.Query(latestInsertedSQL, tableName)
@@ -385,6 +419,7 @@ func (s *ReservationStore) GetLatestInsertedID(tableName string) (int, error) {
 }
 
 func (s *ReservationStore) GetReservationLists(userName string) ([]*Reservation, error) {
+	// get all reservations of a user
 	result := []*Reservation{}
 	query := `
 		SELECT R.reservationID, R.tranDate, R.reserveDate, R.beginTime, R.endTime, RM.roomName, RT.roomTypeName
@@ -401,6 +436,8 @@ func (s *ReservationStore) GetReservationLists(userName string) ([]*Reservation,
 	}
 
 	defer reservationInfo.Close()
+
+	// parse each row into Reservation struct
 	for reservationInfo.Next() {
 		var id int
 		var tranDate string
@@ -428,10 +465,16 @@ func (s *ReservationStore) GetReservationLists(userName string) ([]*Reservation,
 		result = append(result, &res)
 	}
 
+	// return the result
 	return result, nil
 }
 
 func (s *ReservationStore) GetRoomLists(roomName string, capacity *int, floor *int, roomType string) ([]*Room, error) {
+	// get all room based on the search query
+	// if roomName is "*", it means any room name
+	// if capacity is nil, it means any capacity
+	// if floor is nil, it means any floor
+	// if roomType is "*", it means any room type
 	query := `
 		SELECT R.roomID, R.roomName, R.capacity, R.roomFloor, RT.roomTypeName 
 		FROM tblRoom R JOIN tblRoomType RT ON R.roomTypeID = RT.roomTypeID
@@ -445,6 +488,10 @@ func (s *ReservationStore) GetRoomLists(roomName string, capacity *int, floor *i
 	}
 
 	defer reservationInfo.Close()
+
+	// for each row
+	// determine whether it follows the requirement
+	// if so, push it to the result
 	for reservationInfo.Next() {
 		var id int
 		var rName string
@@ -480,12 +527,15 @@ func (s *ReservationStore) GetRoomLists(roomName string, capacity *int, floor *i
 }
 
 func (s *ReservationStore) GetEquipList(roomName string) ([]*Equipment, error) {
+	// search all current equipments in a room
 	query := `
 		SELECT E.equipName, ER.equipRoomID
 		FROM tblEquipment E JOIN tblEquipInRoom ER ON ER.equipID = E.equipID
 		JOIN tblRoom R ON R.roomID = ER.roomID
-		WHERE R.roomName = '' AND ER.removeDate IS NULL`
+		WHERE R.roomName = ? AND ER.removeDate IS NULL`
 
+	// call the query
+	// return error if cannot search
 	equipInfo, err := s.db.Query(query, roomName)
 	defer equipInfo.Close()
 	if err != nil {
@@ -493,6 +543,9 @@ func (s *ReservationStore) GetEquipList(roomName string) ([]*Equipment, error) {
 	}
 	result := []*Equipment{}
 
+	// for each row
+	// parse it into equipment struct
+	// terminate the process if scan error occurs
 	for equipInfo.Next() {
 		var equipRoomID int
 		var equip string
@@ -511,6 +564,12 @@ func (s *ReservationStore) GetEquipList(roomName string) ([]*Equipment, error) {
 }
 
 func (s *ReservationStore) GetIssues(roomName string, searchType string) ([]*Issue, error) {
+	// get issues in different types:
+	// All: all issues
+	// Unconfirmed: unconfirmed issues of a room
+	// Unsolved: unsolved issues of a room
+	// Confirmed: confirmed issues of a room
+	// Solved: solved issues of a room
 	queries := map[string]string{
 		"All": `SELECT RI.roomIssueID, R.roomName, RI.roomIssueBody, RI.createDate 
 		FROM tblRoomIssue RI JOIN tblRoom R ON R.roomID = RI.roomID`,
@@ -531,18 +590,24 @@ func (s *ReservationStore) GetIssues(roomName string, searchType string) ([]*Iss
 		WHERE R.roomName = ? AND RI.solveDate IS NOT NULL`,
 	}
 
+	// get the query based on the type
+	// if type not found, terminate and throw error
 	result := []*Issue{}
 	query, found := queries[searchType]
 	if !found {
 		return result, nil
 	}
 
+	// search target issues
+	// return errors if cannot search
 	issueInfo, err := s.db.Query(query, roomName)
 	defer issueInfo.Close()
 	if err != nil {
 		return nil, err
 	}
 
+	// parse each row into issue objects
+	// terminate and throw errors if scan error occurs
 	for issueInfo.Next() {
 		var issueID int
 		var roomName string
@@ -565,17 +630,22 @@ func (s *ReservationStore) GetIssues(roomName string, searchType string) ([]*Iss
 }
 
 func (s *ReservationStore) AddIssue(issueBody string, roomName string) (int, error) {
+	// add issue of a room
+	// if the body is empty, terminate and throw error
 	if len(issueBody) == 0 {
 		return -1, errors.New("Plz write something for the issue")
 	}
-	date := s.GetCurrentTime()
 
+	// record date
+	date := s.GetCurrentTime()
 	transaction := `
 		EXEC usp_addIssue
 		@roomName = ?,
 		@roomIssue = ?,
 		@issueDate = ?
 	`
+
+	// call the transactions, return any error if tran failed
 	_, tranErr := s.db.Exec(transaction, roomName, issueBody, date)
 	if tranErr != nil {
 		return -1, tranErr
@@ -587,6 +657,11 @@ func (s *ReservationStore) AddIssue(issueBody string, roomName string) (int, err
 }
 
 func (s *ReservationStore) UpdateIssue(issueID int, updateType string, userName string) error {
+	// two ways of update
+	// confirm: label an issue as confirmed (need to be solved)
+	// solved: label an issue as solved
+
+	// if issues id not positive, throw error
 	if issueID <= 0 {
 		return errors.New("ID must be positive")
 	}
@@ -601,11 +676,16 @@ func (s *ReservationStore) UpdateIssue(issueID int, updateType string, userName 
 					@userName = ?`,
 	}
 
+	// get update type
+	// throw error if not found
 	transaction, found := transactions[updateType]
 
 	if !found {
 		return errors.New("Update Method not found")
 	}
+
+	// update the transaction
+	// throw any error if the transaction failed
 	date := s.GetCurrentTime()
 	_, tranErr := s.db.Exec(transaction, issueID, date, userName)
 
@@ -613,6 +693,8 @@ func (s *ReservationStore) UpdateIssue(issueID int, updateType string, userName 
 }
 
 func (s *ReservationStore) UpdateEquipName(oldname string, newname string, username string) error {
+	// change the equipment name
+	// throw any error if tran failed
 	transaction := `
 		EXEC usp_updateEquipmentName
 		@oldName = ?,
@@ -626,6 +708,7 @@ func (s *ReservationStore) UpdateEquipName(oldname string, newname string, usern
 }
 
 func (s *ReservationStore) GetAllEquipment() ([]string, error) {
+	// get all equips in a building
 	query := `SELECT equipName FROM tblEquipment`
 	equipInfo, err := s.db.Query(query)
 	defer equipInfo.Close()
@@ -633,6 +716,9 @@ func (s *ReservationStore) GetAllEquipment() ([]string, error) {
 		return nil, err
 	}
 	result := []string{}
+	// for each row of equipment name
+	// push it into the result
+	// if scan error occurs, terminate and throw errors
 	for equipInfo.Next() {
 		var equipName string
 		scanErr := equipInfo.Scan(&equipName)
@@ -645,6 +731,8 @@ func (s *ReservationStore) GetAllEquipment() ([]string, error) {
 }
 
 func (s *ReservationStore) DeleteEquipment(equipName string, username string) error {
+	// delete an equipment from a building
+	// return any error if occurs
 	transaction := `
 		EXEC usp_deleteEquipment
 		@equipName = ?,

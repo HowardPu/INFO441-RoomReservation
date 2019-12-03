@@ -84,6 +84,7 @@ func main() {
 	mux.HandleFunc("/v1/specificRoom", ctx.SpecificRoomHandler)
 	mux.HandleFunc("/v1/equip", ctx.EquipmentHandler)
 	mux.HandleFunc("/v1/issue", ctx.IssueHandler)
+	mux.HandleFunc("/v1/roomUsedTime", ctx.GetUsedTimeHandler)
 
 	log.Printf("server is listening at %s...", addr)
 	log.Fatal(http.ListenAndServe(addr, mux))

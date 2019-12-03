@@ -80,6 +80,7 @@ func (s *MsSqlStore) GetByUserName(username string) (*User, error) {
 		return nil, err
 	}
 
+	// return any scan error,
 	user := User{}
 	userInfo.Next()
 	scanErr := userInfo.Scan(&(user.ID), &(user.Email), &(user.UserName), &(user.PassHash), &(user.Type))
@@ -88,11 +89,13 @@ func (s *MsSqlStore) GetByUserName(username string) (*User, error) {
 		return nil, scanErr
 	}
 
+	// return thr user info
 	return &user, nil
 }
 
 func (s *MsSqlStore) Insert(user *User) (*User, error) {
 
+	// parse user info
 	userDat := *user
 
 	result := User{
@@ -110,6 +113,7 @@ func (s *MsSqlStore) Insert(user *User) (*User, error) {
 			@passHash = ?,
 			@userTypeName = ?`
 
+	// insert into sql db
 	_, err := s.db.Exec(transaction,
 		result.UserName,
 		result.Email,
@@ -117,10 +121,12 @@ func (s *MsSqlStore) Insert(user *User) (*User, error) {
 		result.Type,
 	)
 
+	// return any error that exists
 	if err != nil {
 		return nil, err
 	}
 
+	// get the latest inserted user id
 	latestInsertedSQL := `SELECT IDENT_CURRENT('tblUser')`
 	lastestID, lastestErr := s.db.Query(latestInsertedSQL)
 
@@ -128,10 +134,12 @@ func (s *MsSqlStore) Insert(user *User) (*User, error) {
 		return nil, lastestErr
 	}
 
+	// return any error that occurs
 	lastestID.Next()
 	scanErr := lastestID.Scan(&(result.ID))
 	lastestID.Close()
 
+	// set assigned id into user struct, and return it
 	if scanErr != nil {
 		return nil, scanErr
 	}

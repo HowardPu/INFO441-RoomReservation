@@ -77,6 +77,7 @@ func main() {
 	mux.Handle("/v1/specificRoom", reserveProxy)
 	mux.Handle("/v1/equip", reserveProxy)
 	mux.Handle("/v1/issue", reserveProxy)
+	mux.Handle("/v1/roomUsedTime", reserveProxy)
 
 	go ctx.StartListeningRabbitMQ()
 
