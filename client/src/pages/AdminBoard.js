@@ -3,7 +3,12 @@ import AddRoomForm from '../components/AddRoomForm'
 import DeleteRoomForm from '../components/DeleteRoomForm'
 
 class Admin extends React.Component {
+  // add equipment
+  // update equipment
+  // del equipment
+  
 
+  
     render() {
       return (
           <div>
@@ -12,6 +17,9 @@ class Admin extends React.Component {
                 <AddRoomForm />
                 <hr />
                 <DeleteRoomForm />
+
+
+                /
           </div>
       );
     }

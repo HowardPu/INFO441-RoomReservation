@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Switch, Route, Redirect} from 'react-router-do
 import User from './pages/UserBoard'
 import Admin from './pages/AdminBoard'
 import Signin from './pages/SigninPage'
+import Reserve from './pages/ReserveRoom'
 import Signup from './pages/SignupPage'
 import './App.css';
 
@@ -41,6 +42,7 @@ class App extends React.Component {
               <Route exact path='/signup' component={Signup} />
               <Route exact path='/admin' component={Admin} />
               <Route exact path='/user' component={User} />
+              <Route exact path='/reserve' component={Reserve} />
               <Redirect to="/signin" />
             </Switch>
           </div>

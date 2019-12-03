@@ -64,12 +64,11 @@ class Signup extends React.Component {
                 passwordConf: this.state.passwordConf,
                 userName: this.state.username
             }
-            console.log(userInput)
             this.postData(signupURL, userInput, jsonHeader);
         }
     }
 
-    postInfo(url, userInput, headerInput) {
+    postData(url, userInput, headerInput) {
         fetch(url, {
             method: 'POST',
             mode: "cors",
@@ -106,7 +105,11 @@ class Signup extends React.Component {
                     {this.state.errMes && <div className="errMes">{this.state.errMes}</div>}
                     <Form.Group controlId="signupEmail">
                         <Form.Label>Email address</Form.Label>
-                        <Form.Control type="email" placeholder="Enter email" />
+                        <Form.Control 
+                            type="email" 
+                            value={this.state.email}
+                            onChange={(e) => {this.onChange(e)}}
+                            placeholder="Enter email" />
                         <Form.Text className="text-muted">
                         We'll never share your email with anyone else.
                         </Form.Text>
@@ -114,20 +117,31 @@ class Signup extends React.Component {
 
                     <Form.Group controlId="signupUsername">
                         <Form.Label>Username</Form.Label>
-                        <Form.Control placeholder="Username" />
+                        <Form.Control 
+                            value={this.state.username}
+                            onChange={(e) => {this.onChange(e)}}
+                            placeholder="Username" />
                     </Form.Group>
 
                     <Form.Group controlId="signupPassword">
                         <Form.Label>Password</Form.Label>
-                        <Form.Control type="password" placeholder="Password" />
+                        <Form.Control 
+                            value={this.state.password}
+                            onChange={(e) => {this.onChange(e)}}
+                            type="password" 
+                            placeholder="Password" />
                     </Form.Group>
 
                     <Form.Group controlId="signupPasswordConf">
                         <Form.Label>Confirm your Password</Form.Label>
-                        <Form.Control type="password" placeholder="Password Confirmation" />
+                        <Form.Control 
+                            type="password" 
+                            value={this.state.passwordConf}
+                            onChange={(e) => {this.onChange(e)}}
+                            placeholder="Password Confirmation" />
                     </Form.Group>
 
-                    <Button variant="primary" type="submit">
+                    <Button variant="primary" type="submit" onClick={(e) => this.onSubmit(e)}>
                         Submit
                     </Button>
                 </Form>

@@ -13,7 +13,7 @@ import (
 
 //bcryptCost is the default bcrypt cost to use when hashing passwords
 var bcryptCost = 13
-var RegUserType = "Admin"
+var RegUserType = "Normal"
 
 //User represents a user account in the database
 type User struct {

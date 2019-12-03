@@ -3,8 +3,9 @@ import Form from 'react-bootstrap/Form'
 import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
+import {Redirect} from 'react-router-dom';
 
-const host = ""
+const host = "http://localhost"
 const jsonHeader =  {
     'Authorization': localStorage.getItem('auth')
 }
@@ -33,6 +34,8 @@ class RoomList extends React.Component {
             floor: '',
             capacity: '',
             type: '',
+            clickReserve: false,
+            reserveRoom: null,
         }
     }
 
@@ -47,15 +50,26 @@ class RoomList extends React.Component {
             capacity: this.state.capacity,
             roomType: this.state.type
         }
-        var data = this.getData(getRoomURL, userInput, jsonHeader);
-        this.setState({data: data});
+        // var data = this.getData(getRoomURL, userInput, jsonHeader);
+        // this.setState({data: data});
+    }
+
+    componentWillUnmount() {
+        this.setState(
+            {
+                notification: '',
+                errMes: '',
+                reserveRoom: null
+            }
+        )
     }
 
     onChange(e) {
         this.setState(
             {
                 notification: '',
-                errMes: ''
+                errMes: '',
+                reserveRoom: null
             }
         )
         switch (e.target.id) {
@@ -93,27 +107,21 @@ class RoomList extends React.Component {
     renderData() {
         console.log(this.state.data)
         return this.state.data.map((item, i) => {
-            let name = item.roomName;
+            let roomName = item.roomName;
             let capacity = item.capacity;
             let floor = item.floor;
             let roomType = item.roomType;
             return(
                 <tr key={i}>
-                    <td key={"name "+name}>{name}</td>
-                    <td key={"floor "+name}>{floor ? floor : "n/a"}</td>
-                    <td key={"capa "+name}>{capacity ? capacity : "n/a"}</td>
-                    <td key={"type "+name}>{roomType}</td>
-                    <td key={"btn "+name}><Button onClick={(e, data) => this.onReserve(e, item)}>Reserve</Button></td>
+                    <td key={"name "+i}>{roomName}</td>
+                    <td key={"floor "+i}>{floor ? floor : "n/a"}</td>
+                    <td key={"capa "+i}>{capacity ? capacity : "n/a"}</td>
+                    <td key={"type "+i}>{roomType}</td>
+                    <td key={"btn "+i}><Button value={item} onClick={() => {this.setState({clickReserve: true, reserveRoom: item})}}>Reserve</Button></td>
                 </tr>
             )
         })
     }
-    
-    onReserve(e, data) {
-        console.log(e);
-        console.log(data)
-    }
-
 
     getData(url, userInput, headerInput) {
         fetch(url, {
@@ -140,6 +148,10 @@ class RoomList extends React.Component {
 
 
     render() {
+        if (this.state.clickReserve && this.state.reserveRoom !== null) {
+            console.log(this.state.reserveRoom)
+            return (<Redirect to={{pathname:'/reserve', state:this.state.reserveRoom}} />)
+        }
         return (
             <section>
                 {this.state.errMes && <div className="errMes">{this.state.errMes}</div>}

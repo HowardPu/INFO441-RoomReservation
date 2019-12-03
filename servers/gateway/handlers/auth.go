@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -76,74 +75,34 @@ func (ctx *HandlerContext) UsersHandler(w http.ResponseWriter, r *http.Request) 
 	w.Write(json)
 }
 
-// resource path /v1/users/{userID}
-func (ctx *HandlerContext) SpecificUserHandler(w http.ResponseWriter, r *http.Request) {
-
-	// throw StatusMethodNotAllowed if the request method is not GET or PATCH
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// get user information from session database
-	sessionUser := U.User{}
-	locker.Lock()
-	defer locker.Unlock()
-	_, authErr := S.GetState(r, ctx.SessionKey, ctx.SessionStore, &sessionUser)
-
-	// if error occurs, return StatusUnauthorized
-	if authErr != nil {
-		http.Error(w, "Auth Failed", http.StatusUnauthorized)
-		return
-	}
-
-	// get id from the path
-	path := r.URL.Path
-	idSplit := strings.Split(path, "/")
-	id := idSplit[len(idSplit)-1]
-
-	user := U.User{}
-
-	idstr := strconv.FormatInt(sessionUser.ID, 10)
-	if id != "me" && idstr != id {
-		http.Error(w, "User Not Allowed", http.StatusForbidden)
-		return
-	}
-
-	targetID := sessionUser.ID
-
-	newUser, getErr := ctx.UserStore.GetById(targetID)
-	if getErr != nil {
-		http.Error(w, "User Not Found", http.StatusForbidden)
-		return
-	}
-
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	user = *newUser
-	encoder := json.NewEncoder(os.Stdout)
-	encoder.Encode(user)
-	json, _ := json.Marshal(user)
-	w.Write(json)
-}
-
+// this handler authenticates a user and post its information into the response
 func (ctx *HandlerContext) SessionsHandler(w http.ResponseWriter, r *http.Request) {
+	// if the method is not posy, throw MethodNotAllowed
 	if r.Method != http.MethodPost {
 		http.Error(w, "Not Post Request", http.StatusMethodNotAllowed)
 		return
 	}
 
+	// if request does not have application/json header, throw unsupport media type
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
 		http.Error(w, "Header must be application/json", http.StatusUnsupportedMediaType)
 		return
 	}
 
+	// decode credential information into Credential
 	decoder := json.NewDecoder(r.Body)
 	var credential U.Credentials
-	decoder.Decode(&credential)
+	decodeErr := decoder.Decode(&credential)
 
+	// if something wrong when decode, throw bad request
+	if decodeErr != nil {
+		fmt.Printf("%v ", decodeErr)
+		http.Error(w, "Cannot decode credential", http.StatusBadRequest)
+		return
+	}
+
+	// get email, check fail attempts, if more than 5, reject authorization
 	email := credential.Email
 	failAttempt, _ := ctx.SessionStore.GetEmailFailLogIn(email)
 	if failAttempt >= 5 {
@@ -151,10 +110,12 @@ func (ctx *HandlerContext) SessionsHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// give read lock, read user information
 	locker.RLock()
 	user, getErr := ctx.UserStore.GetByEmail(email)
 	locker.RUnlock()
 
+	// if cannot get user info, sleep 1 sec, and reject authorization
 	if getErr != nil {
 		time.Sleep(1 * time.Second)
 		http.Error(w, "Cannot Authenticate", http.StatusUnauthorized)
@@ -162,34 +123,41 @@ func (ctx *HandlerContext) SessionsHandler(w http.ResponseWriter, r *http.Reques
 	}
 	authError := user.Authenticate(credential.Password)
 
+	// if auth failed, increament fail attempt by 1 and throw unauthroized
 	if authError != nil {
 		ctx.SessionStore.IncrementFailCount(email)
 		http.Error(w, "Cannot Authenticate", http.StatusUnauthorized)
 		return
 	}
 
+	// if seccuss, remove fail record
 	ctx.SessionStore.RemoveFailRecord(email)
 
-	S.BeginSession(ctx.SessionKey, ctx.SessionStore, user, w)
-
+	// begin session for this user
 	locker.Lock()
+	S.BeginSession(ctx.SessionKey, ctx.SessionStore, user, w)
 	defer locker.Unlock()
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
+	// encode user info into the response
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.Encode(user)
 	json, _ := json.Marshal(user)
 	w.Write(json)
 }
 
+// this function ends sessuon for a auth token
 func (ctx *HandlerContext) SpecificSessionHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Not Delete Request", http.StatusMethodNotAllowed)
 		return
 	}
 
+	// take tha auth parameter into thr request header
+	// 1: delete token in session store
+	// 2: remove websocket connection for this token
 	path := r.URL.Path
 	split := strings.Split(path, "/")
 	last := split[len(split)-1]

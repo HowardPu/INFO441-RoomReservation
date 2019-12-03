@@ -11,7 +11,6 @@ class User extends React.Component {
                 <br />
                 <h2>Search Rooms</h2>
                 <RoomList />
-
             </div>
         );
     }

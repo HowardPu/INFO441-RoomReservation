@@ -20,3 +20,12 @@
 .formContainer {
   max-width:40vw;
 }
+
+.roomInfoContainer {
+  display: flex;
+  justify-content: start;
+}
+
+.roomInfoItem {
+  margin-right: 10%;
+}

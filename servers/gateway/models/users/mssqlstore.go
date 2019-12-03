@@ -19,15 +19,17 @@ func NewMsSqlStore(db *sql.DB) *MsSqlStore {
 
 func (s *MsSqlStore) GetById(id int64) (*User, error) {
 	insq := `
-		SELECT U.userID, U.email, U.userName, U.passHash, UT.userTypeName
+		SELECT TOP 1 U.userID, U.email, U.userName, U.passHash, UT.userTypeName
 		FROM tblUser U JOIN tblUserType UT ON U.userTypeID = UT.userTypeID
 		WHERE U.userID = ?`
 
+	// search user in db
 	userInfo, err := s.db.Query(insq, id)
 	if err != nil {
 		return nil, err
 	}
 
+	// scan the user, if error occurs, return it
 	user := User{}
 	userInfo.Next()
 	scanErr := userInfo.Scan(&(user.ID), &(user.Email), &(user.UserName), &(user.PassHash), &(user.Type))
@@ -37,14 +39,17 @@ func (s *MsSqlStore) GetById(id int64) (*User, error) {
 		return nil, scanErr
 	}
 
+	// return user
 	return &user, nil
 }
 
 func (s *MsSqlStore) GetByEmail(email string) (*User, error) {
 	insq := `
-	SELECT U.userID, U.email, U.userName, U.passHash, UT.userTypeName
+	SELECT TOP 1 U.userID, U.email, U.userName, U.passHash, UT.userTypeName
 	FROM tblUser U JOIN tblUserType UT ON U.userTypeID = UT.userTypeID
 	WHERE U.email = ?`
+
+	// search user by email
 	userInfo, err := s.db.Query(insq, email)
 	if err != nil {
 		return nil, err
@@ -52,12 +57,14 @@ func (s *MsSqlStore) GetByEmail(email string) (*User, error) {
 
 	user := User{}
 	userInfo.Next()
+	// return error if occurs
 	scanErr := userInfo.Scan(&(user.ID), &(user.Email), &(user.UserName), &(user.PassHash), &(user.Type))
 	userInfo.Close()
 	if scanErr != nil {
 		return nil, scanErr
 	}
 
+	// return suer
 	return &user, nil
 }
 
@@ -66,6 +73,8 @@ func (s *MsSqlStore) GetByUserName(username string) (*User, error) {
 	SELECT U.userID, U.email, U.userName, U.passHash, UT.userTypeName
 	FROM tblUser U JOIN tblUserType UT ON U.userTypeID = UT.userTypeID
 	WHERE U.userName = ?`
+
+	// search user in db by username
 	userInfo, err := s.db.Query(insq, username)
 	if err != nil {
 		return nil, err
@@ -96,10 +105,10 @@ func (s *MsSqlStore) Insert(user *User) (*User, error) {
 
 	transaction :=
 		`EXEC usp_addNewUser 
-		@userName VARCHAR(64),
-		@email VARCHAR(64),
-		@passHash BINARY(60),
-		@userTypeName VARCHAR(32)`
+			@userName = ?,
+			@email = ?,
+			@passHash = ?,
+			@userTypeName = ?`
 
 	_, err := s.db.Exec(transaction,
 		result.UserName,

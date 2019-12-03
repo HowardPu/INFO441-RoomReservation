@@ -3,7 +3,7 @@ import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import {Redirect, Link} from 'react-router-dom';
 
-const host = "https://api.awesome-summary.me" //!!change it later
+const host = "http://localhost" //!!change it later
 const signinURL = host + "/v1/sessions"
 const jsonHeader =  {'Content-Type': 'application/json'}
 
@@ -42,6 +42,7 @@ class Signin extends React.Component {
                 email: this.state.email,
                 password: this.state.password
             }
+            console.log(userInput)
             this.checkSignin(userInput, jsonHeader);
         }
     }
