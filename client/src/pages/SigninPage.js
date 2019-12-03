@@ -112,7 +112,7 @@ class Signin extends React.Component {
                 </Form>
                 {this.state.errMes && <div className="errMes">{this.state.errMes}</div>}
                 <br />
-                <div>Doesn't have an account? <Link to="/signup">Signup</Link></div>
+                <div>Doesn't have an account? <Link to="/signup">Sign up</Link></div>
             </div>
         );
     }

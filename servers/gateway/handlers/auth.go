@@ -4,6 +4,7 @@ import (
 	U "INFO441-RoomReservation/servers/gateway/models/users"
 	S "INFO441-RoomReservation/servers/gateway/sessions"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -55,7 +56,7 @@ func (ctx *HandlerContext) UsersHandler(w http.ResponseWriter, r *http.Request) 
 	updatedUser, insertErr := ctx.UserStore.Insert(user)
 
 	if insertErr != nil {
-		http.Error(w, "Can't add the create same acccounts twice!", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v", insertErr), http.StatusBadRequest)
 		return
 	}
 

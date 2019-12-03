@@ -9,7 +9,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
-var rabbitAddr = "amqp://guest:guest@rabbit:5672/"
+// var rabbitAddr = "amqp://guest:guest@rabbit:5672/"
+var rabbitAddr = "amqp://guest:guest@localhost:5672/"
 var queueName = "MessageQueue"
 var durable = true
 

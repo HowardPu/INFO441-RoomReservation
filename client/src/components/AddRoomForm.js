@@ -67,9 +67,9 @@ class AddRoomForm extends React.Component {
     onSubmit(e){
         e.preventDefault();
         if (!this.state.name) {
-            this.setState({errMes: "Please input room name"})
+            this.setState({errMes: "Please enter room name"})
         } else if (!this.state.type) {
-            this.setState({errMes: "Please input room type"})
+            this.setState({errMes: "Please enter room type"})
         } else {
             var floor = this.state.floor === '' ? null : this.state.floor;
             var capacity = this.state.capacity === '' ? null : this.state.capacity;

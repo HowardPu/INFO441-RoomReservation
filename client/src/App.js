@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Switch, Route, Redirect} from 'react-router-dom'
-import Home from './pages/Home'
 import User from './pages/UserBoard'
 import Admin from './pages/AdminBoard'
 import Signin from './pages/SigninPage'

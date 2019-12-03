@@ -29,7 +29,8 @@ var db, dbERR = sql.Open("mssql", connString)
 
 var msstore = U.NewMsSqlStore(db)
 
-var redisaddr = "redisServer:6379"
+// var redisaddr = "redisServer:6379"
+var redisaddr = "localhost:6379"
 
 var client = redis.NewClient(&redis.Options{
 	Addr: redisaddr,
@@ -52,7 +53,7 @@ func main() {
 	//reserveURLs := []string{reserveAddr}
 
 	if len(addr) == 0 {
-		addr = ":443"
+		addr = ":80"
 	}
 
 	//tlsKeyPath := os.Getenv("TLSKEY")
