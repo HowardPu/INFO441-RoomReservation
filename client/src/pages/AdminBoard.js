@@ -7,14 +7,14 @@ class Admin extends React.Component {
     render() {
       return (
           <div>
-                <h1>Administrator Board</h1>        
+                <h1>Administrator Board</h1>     
+                <hr /> 
                 <AddRoomForm />
                 <hr />
                 <DeleteRoomForm />
           </div>
       );
-  }
-
+    }
 }
 
 export default Admin;

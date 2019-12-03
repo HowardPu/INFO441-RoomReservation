@@ -15,35 +15,8 @@
   margin-top: 5%;
   margin-bottom: 5%;
   margin: 10%;
-/*   
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: center; */
 }
 
 .formContainer {
   max-width:40vw;
 }
-/*
-.searchContainer {
-  max-width: 60vw;
-  color: var(--white);
-  display: flex;
-  flex-direction: row;
-}
-.searchInputBox:focus {
-  outline: none;
-  caret-color: var(--white);
-  border-bottom-color: var(--white);
-}
-
-.searchInputBox {
-  background-color: var(--dark-gray);
-  min-height: 7vh;
-  min-width: 60vw;
-  font-size: 30px;
-  color: var(--white);
-  border: none;
-  border-bottom: var(--light-gray) solid 2px;
-} */

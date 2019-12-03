@@ -1,7 +1,7 @@
 import React from 'react';
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
-import {Redirect} from 'react-router-dom';
+import {Redirect, Link} from 'react-router-dom';
 
 const host = "https://api.awesome-summary.me" //!!change it later
 const signinURL = host + "/v1/sessions"
@@ -84,6 +84,7 @@ class Signin extends React.Component {
         return (
             <div>
                 <h1>Sign In</h1>
+                <br />
                 <Form>
                     <Form.Group controlId="formBasicEmail">
                         <Form.Label>Email address</Form.Label>
@@ -110,6 +111,8 @@ class Signin extends React.Component {
                     </Button>
                 </Form>
                 {this.state.errMes && <div className="errMes">{this.state.errMes}</div>}
+                <br />
+                <div>Doesn't have an account? <Link to="/signup">Signup</Link></div>
             </div>
         );
     }

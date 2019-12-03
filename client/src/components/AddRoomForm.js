@@ -5,7 +5,10 @@ import Button from 'react-bootstrap/Button'
 import Alert from 'react-bootstrap/Alert'
 
 const host = ""
-const jsonHeader =  {'Content-Type': 'application/json'}
+const jsonHeader =  {
+    'Content-Type': 'application/json',
+    'Authorization': localStorage.getItem('auth')
+}
 const addRoomURL = host + "v1/room"
 
 class AddRoomForm extends React.Component {

@@ -43,22 +43,19 @@ class DeleteRoomForm extends React.Component {
 
     patchData(url, userInput, headerInput) {
         fetch(url, {
-            method: 'PATCH',
+            method: 'DELETE',
             mode: "cors",
             headers: headerInput, 
             body: JSON.stringify(userInput)
         }).then(resp => {
             if (resp.ok) {
-                if (!headerInput.Authorization && resp.headers.get('Authorization')) {
-                    localStorage.setItem('auth', resp.headers.get('Authorization'));
-                }
                 return resp.json();
             } else {
                 throw new Error(resp.status)
             }
         }).then(data => {
             console.log(data);
-            let mes = "successfully added room" + data.roomName;
+            let mes = "successfully deleted room" + this.state.name;
             this.setState({notification: mes})
         }).catch(err => {
             var errMes = err.message
