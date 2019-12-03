@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"INFO441-RoomReservation/servers/gateway/sessions"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -10,7 +11,7 @@ import (
 )
 
 var rabbitAddr = "amqp://guest:guest@rabbit:5672/"
-var queueName = "MessageQueue"
+var queueName = "reservationQueue"
 var durable = true
 
 var upgrader = websocket.Upgrader{
@@ -54,6 +55,8 @@ func failOnError(err error, msg string) {
 //goroutines.
 
 func (ctx *HandlerContext) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
+	// parse the user information
+	// if not found, throw unauthorized
 	userStore := UserLite{}
 	_, err := sessions.GetState(r, ctx.SessionKey, ctx.SessionStore, &userStore)
 	if err != nil || userStore.ID <= 0 {
@@ -61,25 +64,31 @@ func (ctx *HandlerContext) WebsocketHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// get the auth auery
+	// if DNE, throw authorized
 	authTokenQuery := r.URL.Query()["auth"]
 	if len(authTokenQuery) == 0 {
-		log.Printf("No AUth Token in Connection")
+		http.Error(w, "No Auth Query", http.StatusUnauthorized)
 		return
 	}
 
+	// get auth token
+	// upgrade the connection to websocket connection
+	// if error occurs, throw bad request
 	authToken := authTokenQuery[0]
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("Fail to initialize websocket connection %v \n", err)
+		http.Error(w, fmt.Sprintf("Fail to initialize websocket connection %v \n", err), http.StatusBadRequest)
 		return
 	}
-	log.Printf("AUth toden: %v \n", authToken)
+
+	// create the websocket connection into websocket store
+	// if error occurs, throw bad request
 	createErr := ctx.SocketStore.AddNewConnection(authToken, conn)
 	if createErr != nil {
-		log.Printf("Fail to create websocket connection %v \n", createErr)
+		http.Error(w, fmt.Sprintf("Fail to create websocket connection %v \n", createErr), http.StatusBadRequest)
 		return
 	}
-	log.Println("End Handshake")
 }
 
 //TODO: start a goroutine that connects to the RabbitMQ server,
@@ -94,10 +103,11 @@ func (ctx *HandlerContext) WebsocketHandler(w http.ResponseWriter, r *http.Reque
 //http://godoc.org/github.com/gorilla/websocket
 
 func (ctx *HandlerContext) StartListeningRabbitMQ() {
+	// make the rabbit connection
 	conn, err := amqp.Dial(rabbitAddr)
-
 	failOnError(err, "Fail to connect RabbitMQ")
 
+	// make the channel
 	channel, chanErr := conn.Channel()
 	failOnError(chanErr, "Fail to open channel")
 
@@ -110,8 +120,8 @@ func (ctx *HandlerContext) StartListeningRabbitMQ() {
 		nil,       // argument
 	)
 
+	// get the message from the rabbitMQ
 	failOnError(qErr, "Fail to connect to Query")
-
 	rabbitChan, errorChan := channel.Consume(
 		queueName, // queue
 		"",        // consumer
@@ -127,7 +137,12 @@ func (ctx *HandlerContext) StartListeningRabbitMQ() {
 	defer channel.Close()
 
 	forever := make(chan bool)
+
+	// create thread to listen client message
 	go ctx.ListeningClientMessage()
+
+	// listen the message from rabbitMQ
+	// and write those message to the clients
 	go func() {
 		for d := range rabbitChan {
 			ctx.SocketStore.Lock.Lock()
@@ -145,6 +160,8 @@ func (ctx *HandlerContext) StartListeningRabbitMQ() {
 }
 
 func (ctx *HandlerContext) ListeningClientMessage() {
+	// listen the spot when the websocket connection is created
+	// and begin listen the client message
 	for {
 		auth := <-ctx.SocketStore.AuthChan
 		go ctx.EndClientConnection(auth)
@@ -152,6 +169,7 @@ func (ctx *HandlerContext) ListeningClientMessage() {
 }
 
 func (ctx *HandlerContext) EndClientConnection(authToken string) {
+	// get the websocket connection
 	conn, found := ctx.SocketStore.Connections[authToken]
 	if !found {
 		log.Println("Connection Nor Found for this auth token")
@@ -159,6 +177,9 @@ func (ctx *HandlerContext) EndClientConnection(authToken string) {
 	}
 
 	for {
+		// listen the client message
+		// if send close message
+		// close the message
 		messageType, _, err := conn.ReadMessage()
 		if err != nil || messageType == CloseMessage {
 			ctx.SocketStore.RemoveConnection(authToken)

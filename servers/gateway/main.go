@@ -16,12 +16,14 @@ import (
 	_ "github.com/denisenkom/go-mssqldb"
 )
 
+// make sql connection
 var server = "mssql441.c2mbdnajn2pb.us-east-1.rds.amazonaws.com"
 var user = "admin"
 var password = "info441ishard"
 var database = "RoomReservation"
 var port = "1433"
 
+// signing key for session
 var signingKey = "JusticsFromAbove"
 
 var connString = fmt.Sprintf("server=%s;user id=%s;password=%s;database=%s;port=%s", server, user, password, database, port)
@@ -65,7 +67,6 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/users", ctx.UsersHandler)
-	mux.HandleFunc("/v1/users/", ctx.SpecificUserHandler)
 	mux.HandleFunc("/v1/sessions", ctx.SessionsHandler)
 	mux.HandleFunc("/v1/sessions/", ctx.SpecificSessionHandler)
 	mux.HandleFunc("/v1/ws", ctx.WebsocketHandler)

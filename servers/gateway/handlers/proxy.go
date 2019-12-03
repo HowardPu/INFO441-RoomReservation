@@ -15,6 +15,10 @@ type UserLite struct {
 	Type     string `json:"userType"`
 }
 
+// this proxy checks the authentication header
+// if the token is authenticated
+// pass the user information into reservation system
+// if not, remove X-User Header
 func (ctx *HandlerContext) NewServiceProxy(addr string) *httputil.ReverseProxy {
 	mx := sync.Mutex{}
 
