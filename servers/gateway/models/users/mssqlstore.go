@@ -2,12 +2,9 @@ package users
 
 import (
 	"database/sql"
-	"sync"
 
 	_ "github.com/denisenkom/go-mssqldb"
 )
-
-var locker = &sync.RWMutex{}
 
 type MsSqlStore struct {
 	db *sql.DB
@@ -22,10 +19,9 @@ func NewMsSqlStore(db *sql.DB) *MsSqlStore {
 
 func (s *MsSqlStore) GetById(id int64) (*User, error) {
 	insq := `
-		SELECT TOP 1 U.userID, U.email, U.userName, U.passHash, U.photoURL, UN.firstName, UN.lastName
-		FROM tblUser U
-		JOIN tblUserName UN ON U.userID = UN.userID
-		WHERE UN.endDate IS NULL AND U.userID  = ?`
+		SELECT U.userID, U.email, U.userName, U.passHash, UT.userTypeName
+		FROM tblUser U JOIN tblUserType UT ON U.userTypeID = UT.userTypeID
+		WHERE U.userID = ?`
 
 	userInfo, err := s.db.Query(insq, id)
 	if err != nil {
@@ -46,10 +42,9 @@ func (s *MsSqlStore) GetById(id int64) (*User, error) {
 
 func (s *MsSqlStore) GetByEmail(email string) (*User, error) {
 	insq := `
-		SELECT TOP 1 U.userID, U.email, U.userName, U.passHash
-		FROM tblUser U
-		JOIN tblUserName UN ON U.userID = UN.userID
-		WHERE UN.endDate IS NULL AND U.email  = ?`
+	SELECT U.userID, U.email, U.userName, U.passHash, UT.userTypeName
+	FROM tblUser U JOIN tblUserType UT ON U.userTypeID = UT.userTypeID
+	WHERE U.email = ?`
 	userInfo, err := s.db.Query(insq, email)
 	if err != nil {
 		return nil, err
@@ -68,10 +63,9 @@ func (s *MsSqlStore) GetByEmail(email string) (*User, error) {
 
 func (s *MsSqlStore) GetByUserName(username string) (*User, error) {
 	insq := `
-		SELECT TOP 1 U.userID, U.email, U.userName, U.passHash
-		FROM tblUser U
-		JOIN tblUserName UN ON U.userID = UN.userID
-		WHERE UN.endDate IS NULL AND U.userName  = ?`
+	SELECT U.userID, U.email, U.userName, U.passHash, UT.userTypeName
+	FROM tblUser U JOIN tblUserType UT ON U.userTypeID = UT.userTypeID
+	WHERE U.userName = ?`
 	userInfo, err := s.db.Query(insq, username)
 	if err != nil {
 		return nil, err
@@ -102,9 +96,10 @@ func (s *MsSqlStore) Insert(user *User) (*User, error) {
 
 	transaction :=
 		`EXEC usp_addNewUser 
-		@U_Name = ?, 
-		@E_Mail = ?, 
-		@P_Hash = ?,`
+		@userName VARCHAR(64),
+		@email VARCHAR(64),
+		@passHash BINARY(60),
+		@userTypeName VARCHAR(32)`
 
 	_, err := s.db.Exec(transaction,
 		result.UserName,
@@ -133,42 +128,4 @@ func (s *MsSqlStore) Insert(user *User) (*User, error) {
 	}
 
 	return &result, nil
-}
-
-func (s *MsSqlStore) Delete(id int64) error {
-
-	user, getErr := s.GetById(id)
-
-	if getErr != nil {
-		return getErr
-	}
-
-	transaction := `
-		EXEC usp_removeUser
-		@U_Name = ?
-	`
-	_, tranErr := s.db.Exec(transaction, (*user).UserName)
-
-	if tranErr != nil {
-		return tranErr
-	}
-
-	return nil
-}
-
-func (s *MsSqlStore) AddSignInInfo(userName string, date string, ip string) error {
-
-	transaction := `
-		EXEC dbo.usp_addSignIn
-		@U_Name = ?,
-		@Date = ?,
-		@IP = ?
-	`
-	_, tranErr := s.db.Exec(transaction, userName, date, ip)
-
-	if tranErr != nil {
-		return tranErr
-	}
-
-	return nil
 }

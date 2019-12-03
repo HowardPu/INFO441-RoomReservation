@@ -171,23 +171,8 @@ func (ctx *HandlerContext) SessionsHandler(w http.ResponseWriter, r *http.Reques
 
 	S.BeginSession(ctx.SessionKey, ctx.SessionStore, user, w)
 
-	userName := user.UserName
-	date := time.Now()
-
-	dateStr := date.Format("01-02-2006 15:04:05")
-
-	ip := r.RemoteAddr
-
-	xForwardIP := r.Header.Get("X-Forwarded-For")
-
-	if len(xForwardIP) > 0 {
-		ipSplit := strings.Split(xForwardIP, ",")
-		ip = strings.TrimSpace(ipSplit[0])
-	}
-
 	locker.Lock()
 	defer locker.Unlock()
-	ctx.UserStore.AddSignInInfo(userName, dateStr, ip)
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

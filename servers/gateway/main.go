@@ -19,7 +19,7 @@ import (
 var server = "mssql441.c2mbdnajn2pb.us-east-1.rds.amazonaws.com"
 var user = "admin"
 var password = "info441ishard"
-var database = "INFO441A5"
+var database = "RoomReservation"
 var port = "1433"
 
 var signingKey = "JusticsFromAbove"
@@ -49,19 +49,19 @@ func main() {
 	addr := os.Getenv("ADDR")
 	reserveAddr := os.Getenv("RESERVE")
 
-	reserveURLs := []string{reserveAddr}
+	//reserveURLs := []string{reserveAddr}
 
 	if len(addr) == 0 {
 		addr = ":443"
 	}
 
-	tlsKeyPath := os.Getenv("TLSKEY")
-	tlsCertPath := os.Getenv("TLSCERT")
+	//tlsKeyPath := os.Getenv("TLSKEY")
+	//tlsCertPath := os.Getenv("TLSCERT")
 
-	log.Printf(tlsKeyPath)
-	log.Printf(tlsCertPath)
+	//log.Printf(tlsKeyPath)
+	//log.Printf(tlsCertPath)
 
-	reserveProxy := ctx.NewServiceProxy(reserveURLs)
+	reserveProxy := ctx.NewServiceProxy(reserveAddr)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/users", ctx.UsersHandler)
@@ -70,12 +70,17 @@ func main() {
 	mux.HandleFunc("/v1/sessions/", ctx.SpecificSessionHandler)
 	mux.HandleFunc("/v1/ws", ctx.WebsocketHandler)
 
+	mux.Handle("/v1/room", reserveProxy)
 	mux.Handle("/v1/reserve", reserveProxy)
+	mux.Handle("/v1/specificRoom", reserveProxy)
+	mux.Handle("/v1/equip", reserveProxy)
+	mux.Handle("/v1/issue", reserveProxy)
 
 	go ctx.StartListeningRabbitMQ()
 
 	wrappedMux := H.NewCors(mux)
 
 	log.Printf("server is listening at %s...", addr)
-	log.Fatal(http.ListenAndServeTLS(addr, tlsCertPath, tlsKeyPath, wrappedMux))
+	//log.Fatal(http.ListenAndServeTLS(addr, tlsCertPath, tlsKeyPath, wrappedMux))
+	log.Fatal(http.ListenAndServe(addr, wrappedMux))
 }
