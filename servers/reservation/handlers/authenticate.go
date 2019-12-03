@@ -8,6 +8,8 @@ import (
 )
 
 // Authenticate current user signin status
+// if the request does not have X-User header, return nil
+// otherwise, return the user struct
 func Authenticate(r *http.Request) *M.User {
 	userInfo := r.Header.Get("X-User")
 
