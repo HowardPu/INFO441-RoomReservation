@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	M "INFO441-RoomReservation/servers/reservation/models"
+	S "INFO441-RoomReservation/servers/reservation/store"
 
 	"github.com/streadway/amqp"
 )
 
 type HandlerContext struct {
-	ReservationStore *M.ReservationStore
+	ReservationStore *S.ReservationStore
 	RabbitConnection *amqp.Channel
 	RabbitQueueName  string
 }

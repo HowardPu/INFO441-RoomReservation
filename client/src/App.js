@@ -25,18 +25,53 @@ class App extends React.Component {
         authToken: "",
         userType: "",
         userName: "",
-        error: null
+        error: null,
+        connection: null,
+        message: '',
     }
 
     this.handleSignIn = this.handleSignIn.bind(this)
     this.handleSignOut = this.handleSignOut.bind(this)
     this.handleSignUp = this.handleSignUp.bind(this)
+    this.updateState = this.updateState.bind(this)
 
   }
 
   componentDidMount() {
-    
+
   }
+
+  updateState(field, value) {
+    let prevState = this.state
+    prevState[field] = value
+    this.setState(prevState)
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (this.state.authToken != "" && !this.state.connection) {
+      let client = new WebSocket("wss:///api.html-summary.me/ws?auth=" + this.state.authToken);
+
+      client.onopen = () => {
+        console.log('WebSocket Client Connected');
+      };
+  
+      client.onmessage = (message) => {
+          console.log(message);
+          this.setState({message})
+      };
+  
+      client.onerror = (err) => {
+          console.log(err);
+      };
+  
+      client.onclose = (event) => {
+          console.log("WebsocketStatus: Closed")
+      };
+      this.setState({
+        connection: client
+      })
+    }
+}
 
   handleSignUp(email, password, userName) {
     fetch(signupURL, {
@@ -77,11 +112,14 @@ class App extends React.Component {
         mode: "cors",
         headers: {'Authorization': this.state.authToken}
     }).then(() => {
+      let conn = this.state.connection
+      conn.close()
       this.setState({
         authToken: "",
         userType: "",
         userName: "",
-        error: null
+        error: null,
+        connection: null
       })
     }).catch(err => {
         console.log(err)
@@ -126,7 +164,6 @@ class App extends React.Component {
     return (
       <div className="App">
         <header className="App-header"></header>
-
         <Router>
           <div>
             <Switch>
@@ -155,8 +192,15 @@ class App extends React.Component {
               <Route exact path='/issues' render={(routerProps) => {
                   return <Issues {...routerProps} appState={this.state} signOutHandler={this.handleSignOut} />
               }}/>
-              <Route exact path='/user' component={User} />
-              <Route exact path='/reserve' component={Reserve} />
+
+              <Route exact path='/user' render={(routerProps) => {
+                  return <User {...routerProps} appState={this.state} updateState={this.updateState}/>
+              }}/>
+
+              <Route exact path='/reserve' render={(routerProps) => {
+                  return <Reserve {...routerProps} appState={this.state} updateState={this.updateState} />
+              }}/>
+
               <Redirect to="/signin" />
             </Switch>
           </div>

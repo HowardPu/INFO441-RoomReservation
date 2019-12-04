@@ -3,6 +3,7 @@ import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import Alert from 'react-bootstrap/Alert'
 import DatePicker from 'react-datepicker';
+import {Redirect} from 'react-router-dom';
 import "react-datepicker/dist/react-datepicker.css";
 
 const host = "https://api.html-summary.me/"
@@ -54,9 +55,10 @@ class ReservationForm extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        console.log(this.props.newRes)
-        if (this.props.newRes !== prevProps.newRes) {
-            return true;
+        console.log(this.props.updateState)
+        if (this.props.appState.message !== '') {
+            this.manipulateTimeData()
+            this.props.updateState("message", "")
         }
         // if (this.props.newRes !== prevProps.newRes) {
         //     // this.renderTimePicker();
@@ -75,7 +77,6 @@ class ReservationForm extends React.Component {
     
 
     renderTimePicker() {
-        console.log("render!")
         let curDate = new Date()
         var excludeTimes = []
         if (this.state.startedDate){
@@ -262,6 +263,10 @@ class ReservationForm extends React.Component {
     }
 
     render() {
+        let userType = this.props.appState.userType
+        if(userType === "") {
+            return <Redirect to='/signin'/>
+        }
         return(
             <Form>
                 {this.state.errMes && <div className="errMes">{this.state.errMes}</div>}

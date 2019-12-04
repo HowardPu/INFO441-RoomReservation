@@ -15,7 +15,6 @@ import (
 type SocketStore struct {
 	Connections map[string]*websocket.Conn
 	Lock        *sync.RWMutex
-	AuthChan    chan string
 }
 
 // constructs a new SocketStore
@@ -23,7 +22,6 @@ func NewSocketStore() *SocketStore {
 	return &SocketStore{
 		Connections: make(map[string]*websocket.Conn),
 		Lock:        &sync.RWMutex{},
-		AuthChan:    make(chan string),
 	}
 }
 
@@ -41,9 +39,6 @@ func (s *SocketStore) AddNewConnection(auth string, conn *websocket.Conn) error 
 
 	// set the auth token to this connection
 	s.Connections[auth] = conn
-
-	// set the auth token into channel
-	s.AuthChan <- auth
 
 	return nil
 }

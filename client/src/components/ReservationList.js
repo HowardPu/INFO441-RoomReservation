@@ -1,7 +1,6 @@
 import React from 'react';
 import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
-import {Redirect} from 'react-router-dom';
 import Alert from 'react-bootstrap/Alert'
 
 
@@ -20,20 +19,13 @@ class ReservationList extends React.Component {
         }
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
-        if (this.props.message != prevProps.message) {
-            this.getData(resURL, jsonHeader)
-        }
-    }
-
-
     onView(e) {
         e.preventDefault();
-        this.getData(resURL, jsonHeader)
+        let userURL = resURL+"?username="+this.props.appState.userName
+        this.getData(userURL, jsonHeader)
     }
 
     getData(url, headerInput) {
-        console.log("getData")
         fetch(url, {
             method: 'GET',
             mode: "cors",

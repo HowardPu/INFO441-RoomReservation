@@ -62,12 +62,13 @@ class Admin extends React.Component {
               }} >
                       Manage Equipment
               </button>
-
-              <button className="btn btn-primary mr-2" onClick={() => {
-                this.setState({"issues": true})
-              }} >
-                      Update Issues
-              </button>
+              {/*
+                <button className="btn btn-primary mr-2" onClick={() => {
+                  this.setState({"issues": true})
+                }} >
+                        Update Issues
+                </button>
+              */}
           </div>
         </div>
     );

@@ -12,22 +12,14 @@ class RoomDetailPage extends React.Component {
 
     constructor(props) {
         super(props);
-        console.log(this.props.location.state)
+        console.log(this.props.updateState)
         this.state = {
             data: {},
             equip: null
         }
     }
 
-    // componentDidUpdate(prevProps, prevState, snapshot) {
-    //     if (this.props.location.state.newRes != prevState.location.state.newRes) {
-
-    //     }
-    // }
-
-
     componentDidMount() {
-        console.log(this.props.location.state.newRes)
         let url = getEquipURL + '?roomname=' + this.props.location.state.roomInfo.roomName;
         this.getData(url, jsonHeader);    
     }
@@ -104,7 +96,7 @@ class RoomDetailPage extends React.Component {
                 {this.state.equip && this.state.equip.length !== 0 ? this.renderEquip() : <div>No Equipments Info</div>}
                 <br />
                 <h2>Reserve the Room</h2>
-                <ReservationForm newRes={this.props.location.state.newRes} roomName={this.props.location.state.roomInfo.roomName}></ReservationForm>
+                <ReservationForm appState={this.props.appState} updateState={this.props.updateState} roomName={this.props.location.state.roomInfo.roomName}></ReservationForm>
                 <br />
                 <Link to="/user">Back to User Board</Link>
             </div>

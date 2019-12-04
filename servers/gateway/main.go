@@ -60,8 +60,9 @@ func main() {
 	tlsKeyPath := os.Getenv("TLSKEY")
 	tlsCertPath := os.Getenv("TLSCERT")
 
-	log.Printf(tlsKeyPath)
-	log.Printf(tlsCertPath)
+	hub := H.NewHub()
+	go hub.Run()
+	go hub.StartListeningRabbitMQ()
 
 	reserveProxy := ctx.NewServiceProxy(reserveAddr)
 
@@ -69,7 +70,11 @@ func main() {
 	mux.HandleFunc("/v1/users", ctx.UsersHandler)
 	mux.HandleFunc("/v1/sessions", ctx.SessionsHandler)
 	mux.HandleFunc("/v1/sessions/", ctx.SpecificSessionHandler)
-	mux.HandleFunc("/v1/ws", ctx.WebsocketHandler)
+	//mux.HandleFunc("/v1/ws", ctx.WebsocketHandler)
+
+	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		ctx.ServeWs(hub, w, r)
+	})
 
 	mux.Handle("/v1/room", reserveProxy)
 	mux.Handle("/v1/reserve", reserveProxy)
@@ -78,7 +83,7 @@ func main() {
 	mux.Handle("/v1/issue", reserveProxy)
 	mux.Handle("/v1/roomUsedTime", reserveProxy)
 
-	go ctx.StartListeningRabbitMQ()
+	//go ctx.StartListeningRabbitMQ()
 
 	wrappedMux := H.NewCors(mux)
 
