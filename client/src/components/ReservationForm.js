@@ -56,7 +56,7 @@ class ReservationForm extends React.Component {
 
     componentDidUpdate(prevProps, prevState, snapshot) {
         console.log(this.props.updateState)
-        if (this.props.appState.message !== '') {
+        if (this.props.appState.message !== '' && this.state.startedDate) {
             this.manipulateTimeData()
             this.props.updateState("message", "")
         }
@@ -205,6 +205,14 @@ class ReservationForm extends React.Component {
             this.setState({requestInfo: request})
             console.log(request)
             this.postData(reserveURL, request, jsonHeader)
+            this.setState({
+                errMes: '',
+                startedDate: null,
+                startedTime: null,
+                duration: 0.5,
+                showSuccessMes: false,
+                requestInfo: {}
+            })
         }
     }
 

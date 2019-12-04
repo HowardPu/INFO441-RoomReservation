@@ -30,25 +30,14 @@ class RoomList extends React.Component {
 
     componentDidUpdate(prevProps, prevState, snapshot) {
         if (this.props.appState.message !== '') {
+            this.searchData()
             this.props.updateState("message", "")
         }
     }
 
     onSubmit(e){
         e.preventDefault();
-        let roomName = this.state.name ? this.state.name : "*"
-        let roomType = this.state.type ? this.state.type : "*"
-        var url = `${getRoomURL}?roomname=${roomName}&roomtype=${roomType}`
-        if (this.state.floor) {
-            url = url + "&floor=" + this.state.floor
-        }
-
-        if (this.state.capacity) {
-            url = url + "&floor=" + this.state.capacity
-        }
-        console.log(url)
-        this.getData(url, jsonHeader);
-
+        this.searchData();
     }
 
     searchData() {
@@ -62,7 +51,6 @@ class RoomList extends React.Component {
         if (this.state.capacity) {
             url = url + "&floor=" + this.state.capacity
         }
-        console.log(url)
         this.getData(url, jsonHeader);
     }
 
@@ -108,8 +96,6 @@ class RoomList extends React.Component {
     }
 
     renderData() {
-        
-        console.log(this.state.data)
         return this.state.data.map((item, i) => {
             let roomName = item.roomName;
             let capacity = item.capacity;
