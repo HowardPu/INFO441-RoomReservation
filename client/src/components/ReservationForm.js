@@ -106,16 +106,9 @@ class ReservationForm extends React.Component {
             "day=" + this.state.startedDate.getDate();
         var timeslots;
         var excludeTimes = [];
-        let newSlot = this.props.newRes;
-        console.log(newSlot)
         this.getData(getURL).then(data => {
             console.log(data)
             timeslots = data.result;
-            if (newSlot) {
-                for (let t = newSlot.begin; t <= newSlot.begin + newSlot.duration; t++) {
-                    timeslots.add(t);
-                }
-            }
             
             if (timeslots) {
                 timeslots.forEach(receivedTime => {
@@ -133,7 +126,6 @@ class ReservationForm extends React.Component {
                 excludeTimes.push(exclude);
             }
             return excludeTimes;
-            // this.setState({excludeTimes})
         }).catch(err => {
             console.log(err)
         })            
@@ -196,14 +188,6 @@ class ReservationForm extends React.Component {
                 'Authorization': this.props.appState.authToken
             }
             this.postData(reserveURL, request, jsonHeader)
-            this.setState({
-                errMes: '',
-                startedDate: null,
-                startedTime: null,
-                duration: 0.5,
-                showSuccessMes: false,
-                requestInfo: {}
-            })
         }
     }
 
@@ -230,7 +214,9 @@ class ReservationForm extends React.Component {
     }    
 
     renderSuccessAlert() {
+        console.log(this.state.requestInfo)
         let endTime = this.state.requestInfo.beginTime + this.state.requestInfo.duration
+        console.log(endTime)
         let endDate = this.dateGenerate(endTime);
         console.log(this.state.requestInfo.beginTime)
         let endHour = endDate.getHours();
