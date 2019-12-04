@@ -6,9 +6,6 @@ import Table from 'react-bootstrap/Table'
 import {Redirect} from 'react-router-dom';
 
 const host = "https://api.html-summary.me"
-const jsonHeader =  {
-    'Authorization': localStorage.getItem('auth')
-}
 const getRoomURL = host + "/v1/room"
 
 class RoomList extends React.Component {
@@ -50,6 +47,10 @@ class RoomList extends React.Component {
 
         if (this.state.capacity) {
             url = url + "&floor=" + this.state.capacity
+        }
+
+        let jsonHeader =  {
+            'Authorization': this.props.appState.authToken
         }
         this.getData(url, jsonHeader);
     }
@@ -153,7 +154,7 @@ class RoomList extends React.Component {
             return (<Redirect to={{pathname:'/reserve', state:passState}} />)
         }
          
-        if (this.state.authFail == true) {
+        if (this.state.authFail === true) {
             return (<Redirect to='/signin' />)
         }
 

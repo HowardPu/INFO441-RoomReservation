@@ -5,9 +5,7 @@ import Alert from 'react-bootstrap/Alert'
 
 
 const host = "https://api.html-summary.me"
-const jsonHeader =  {
-    'Authorization': localStorage.getItem('auth')
-}
+
 const resURL = host + "/v1/reserve" 
 
 class ReservationList extends React.Component {
@@ -22,6 +20,7 @@ class ReservationList extends React.Component {
     onView(e) {
         e.preventDefault();
         let userURL = resURL+"?username="+this.props.appState.userName
+        let jsonHeader =  {'Authorization': this.props.appState.authToken}
         this.getData(userURL, jsonHeader)
     }
 
@@ -115,13 +114,16 @@ class ReservationList extends React.Component {
             mode: "cors",
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': localStorage.getItem('auth')
+                'Authorization': this.props.appState.authToken
             },
             body: JSON.stringify({id:id})
         }).then(resp => {
             if (resp.status == 200) {
                 console.log("reservation canceled")
-                this.getData(resURL, jsonHeader)
+                let getHeader =  {
+                    'Authorization': this.props.appState.authToken
+                }
+                this.getData(resURL, getHeader)
                 return;
             } else {
                 throw Error(resp.status)

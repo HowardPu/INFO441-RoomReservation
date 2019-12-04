@@ -141,7 +141,6 @@ class App extends React.Component {
             this.setState({
               authToken: resp.headers.get("Authorization")
             })
-            localStorage.setItem('auth', resp.headers.get('Authorization'));
             return resp.json();
         } else {
             throw new Error(resp.status)

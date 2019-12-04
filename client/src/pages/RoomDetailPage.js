@@ -4,9 +4,6 @@ import { Link } from 'react-router-dom';
 
 const host = "https://api.html-summary.me"
 const getEquipURL = host + "/v1/specificRoom"
-const jsonHeader =  {
-    'Authorization': localStorage.getItem('auth')
-}
 
 class RoomDetailPage extends React.Component {
 
@@ -21,6 +18,9 @@ class RoomDetailPage extends React.Component {
 
     componentDidMount() {
         let url = getEquipURL + '?roomname=' + this.props.location.state.roomInfo.roomName;
+        let jsonHeader = {
+            'Authorization': this.state.authToken
+        }
         this.getData(url, jsonHeader);    
     }
 

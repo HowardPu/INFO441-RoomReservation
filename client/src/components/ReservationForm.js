@@ -7,10 +7,6 @@ import {Redirect} from 'react-router-dom';
 import "react-datepicker/dist/react-datepicker.css";
 
 const host = "https://api.html-summary.me/"
-const jsonHeader =  {
-    'Content-Type': 'application/json',
-    'Authorization': localStorage.getItem('auth')
-}
 const latest = 42
 const reserveURL = host + "v1/reserve"
 const getUsedTimeURL = host + "v1/roomUsedTime"
@@ -30,13 +26,8 @@ class ReservationForm extends React.Component {
             duration: 0.5,
             showSuccessMes: false,
             requestInfo: {}
-            // excludeTimes: []
         }
     }
-
-    // componentDidUpdate(){
-    //     this.renderTimePicker();
-    // }
 
     setStartDate(date) {
         this.setState({startedDate: date})
@@ -60,10 +51,6 @@ class ReservationForm extends React.Component {
             this.manipulateTimeData()
             this.props.updateState("message", "")
         }
-        // if (this.props.newRes !== prevProps.newRes) {
-        //     // this.renderTimePicker();
-        //     this.manipulateTimeData()
-        // }
     }
 
 
@@ -170,7 +157,7 @@ class ReservationForm extends React.Component {
         return fetch(url, {
             method: 'GET',
             mode: "cors",
-            headers: {'Authorization': localStorage.getItem('auth')}, 
+            headers: {'Authorization': this.props.appState.authToken}
         }).then(resp => {
            return resp.json()
         })
@@ -204,6 +191,10 @@ class ReservationForm extends React.Component {
 
             this.setState({requestInfo: request})
             console.log(request)
+            let jsonHeader = {
+                'Content-Type': 'application/json',
+                'Authorization': this.props.appState.authToken
+            }
             this.postData(reserveURL, request, jsonHeader)
             this.setState({
                 errMes: '',
