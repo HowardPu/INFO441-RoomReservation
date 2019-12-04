@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/websocket"
 	"github.com/streadway/amqp"
 )
 
@@ -16,11 +15,12 @@ var rabbitAddr = "amqp://guest:guest@rabbit:5672/"
 var queueName = "reservationQueue"
 var durable = true
 
+/*
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin:     func(r *http.Request) bool { return true },
-}
+}*/
 
 const (
 	// TextMessage denotes a text data message. The text message payload is
@@ -78,9 +78,9 @@ func (ctx *HandlerContext) WebsocketHandler(w http.ResponseWriter, r *http.Reque
 	// upgrade the connection to websocket connection
 	// if error occurs, throw bad request
 	authToken := authTokenQuery[0]
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Fail to initialize websocket connection %v \n", err), http.StatusBadRequest)
+	conn, connErr := upgrader.Upgrade(w, r, nil)
+	if connErr != nil {
+		log.Printf("Fail to initialize websocket connection %v \n", connErr)
 		return
 	}
 
@@ -88,8 +88,16 @@ func (ctx *HandlerContext) WebsocketHandler(w http.ResponseWriter, r *http.Reque
 	// if error occurs, throw bad request
 	createErr := ctx.SocketStore.AddNewConnection(authToken, conn)
 	if createErr != nil {
-		http.Error(w, fmt.Sprintf("Fail to create websocket connection %v \n", createErr), http.StatusBadRequest)
+		fmt.Printf("Fail to create websocket connection %v \n", createErr)
 		return
+	}
+
+	for {
+		messageType, _, err := conn.NextReader()
+		if err != nil || messageType == CloseMessage {
+			ctx.SocketStore.RemoveConnection(authToken)
+			return
+		}
 	}
 }
 
@@ -140,9 +148,6 @@ func (ctx *HandlerContext) StartListeningRabbitMQ() {
 
 	forever := make(chan bool)
 
-	// create thread to listen client message
-	go ctx.ListeningClientMessage()
-
 	// listen the message from rabbitMQ
 	// and write those message to the clients
 	go func() {
@@ -159,33 +164,4 @@ func (ctx *HandlerContext) StartListeningRabbitMQ() {
 	}()
 
 	<-forever
-}
-
-func (ctx *HandlerContext) ListeningClientMessage() {
-	// listen the spot when the websocket connection is created
-	// and begin listen the client message
-	for {
-		auth := <-ctx.SocketStore.AuthChan
-		go ctx.EndClientConnection(auth)
-	}
-}
-
-func (ctx *HandlerContext) EndClientConnection(authToken string) {
-	// get the websocket connection
-	conn, found := ctx.SocketStore.Connections[authToken]
-	if !found {
-		log.Println("Connection Nor Found for this auth token")
-		return
-	}
-
-	for {
-		// listen the client message
-		// if send close message
-		// close the message
-		messageType, _, err := conn.ReadMessage()
-		if err != nil || messageType == CloseMessage {
-			ctx.SocketStore.RemoveConnection(authToken)
-			return
-		}
-	}
 }

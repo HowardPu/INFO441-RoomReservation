@@ -2,7 +2,7 @@ package main
 
 import (
 	H "INFO441-RoomReservation/servers/reservation/handlers"
-	M "INFO441-RoomReservation/servers/reservation/models"
+	S "INFO441-RoomReservation/servers/reservation/store"
 	"database/sql"
 	"fmt"
 	"log"
@@ -27,7 +27,7 @@ var signingKey = "JusticsFromAbove"
 var connString = fmt.Sprintf("server=%s;user id=%s;password=%s;database=%s;port=%s", server, user, password, database, port)
 var db, dbERR = sql.Open("mssql", connString)
 
-var resStore = M.NewReservationStore(db)
+var resStore = S.NewReservationStore(db)
 
 var queueName string = "reservationQueue"
 

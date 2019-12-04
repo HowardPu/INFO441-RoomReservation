@@ -25,7 +25,8 @@ class App extends React.Component {
         authToken: "",
         userType: "",
         userName: "",
-        error: null
+        error: null,
+        connection: null
     }
 
     this.handleSignIn = this.handleSignIn.bind(this)
@@ -35,8 +36,37 @@ class App extends React.Component {
   }
 
   componentDidMount() {
-    
+
   }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (this.state.authToken != "" && !this.state.connection) {
+      let client = new WebSocket("wss:///api.html-summary.me/ws?auth=" + this.state.authToken);
+
+      client.onopen = () => {
+        console.log('WebSocket Client Connected');
+      };
+  
+      client.onmessage = (message) => {
+          console.log(message);
+          if (message.data.type === "reservation-create") {
+              this.setState({newRes: message.data})
+          }
+          
+      };
+  
+      client.onerror = (err) => {
+          console.log(err);
+      };
+  
+      client.onclose = (event) => {
+          console.log("WebsocketStatus: Closed")
+      };
+      this.setState({
+        connection: client
+      })
+    }
+}
 
   handleSignUp(email, password, userName) {
     fetch(signupURL, {
@@ -77,11 +107,14 @@ class App extends React.Component {
         mode: "cors",
         headers: {'Authorization': this.state.authToken}
     }).then(() => {
+      let conn = this.state.connection
+      conn.close()
       this.setState({
         authToken: "",
         userType: "",
         userName: "",
-        error: null
+        error: null,
+        connection: null
       })
     }).catch(err => {
         console.log(err)

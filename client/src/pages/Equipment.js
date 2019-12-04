@@ -84,6 +84,31 @@ export class Equipment extends Component {
         })
     }
 
+
+    updateEquip() {
+        fetch(equip, {
+            method: 'PATCH',
+            mode: "cors",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': this.props.appState.authToken
+            }, 
+            body: JSON.stringify({
+                "equipName": this.state.oldName,
+                "newName": this.state.newName
+            })
+        }).then(() => {
+            this.setState({
+                oldName: "",
+                newName: "",
+                updateDisabled: true,
+                research: true
+            })
+        }).catch(err => {
+            console.log(err)
+        })
+    }
+
     searchEquip() {
         fetch(equip, {
             method: 'GET',
@@ -188,7 +213,7 @@ export class Equipment extends Component {
                 <div className="log-in-item"> 
                     <h2>Change Equipment Name</h2>
 
-                    <h2>Current Equipment Name</h2>
+                    <h3>Current Equipment Name</h3>
                     <div className={"form-group"}>
                         <input className="form-control"
                             value={this.state.oldName}
@@ -202,7 +227,7 @@ export class Equipment extends Component {
                             }}/>
                     </div>
 
-                    <h2>New Equipment Name</h2>
+                    <h3>New Equipment Name</h3>
                     <div className={"form-group"}>
                         <input className="form-control"
                             value={this.state.newName}
@@ -218,8 +243,8 @@ export class Equipment extends Component {
 
                     <button className="btn btn-primary mr-2"
                             onClick={() => {
-                                this.deleteEquip()
-                            }} disabled={this.state.delDisabled}>
+                                this.updateEquip()
+                            }} disabled={this.state.updateDisabled}>
                                 Update!
                     </button>
                 </div>

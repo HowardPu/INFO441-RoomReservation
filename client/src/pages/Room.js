@@ -16,7 +16,6 @@ export class Room extends Component {
         this.state = {
             back: false,
             rooms: null,
-            rearchRoom: this.props.appState.authToken,
             research: false
         }
         this.searchAllRooms = this.searchAllRooms.bind(this)
@@ -92,8 +91,9 @@ export class Room extends Component {
                 <hr />  
 
                 <div>
+                    <h1>All Rooms</h1>
                     {this.state.rooms.map((room) => {
-                        return <RoomCard key={"room-" + room.id} room={room} appState={this.props.appState}/>
+                        return <RoomCard key={"room-" + room.id} room={room} appState={this.props.appState} detail={false}/>
                     })}
 
                 </div>
@@ -116,7 +116,7 @@ export class RoomCard extends Component {
         this.state = {
             "equipments": [],
             "issues": [],
-            "detail": false 
+            "detail": this.props.detail
         }
 
         this.searchAllEquipments = this.searchAllEquipments.bind(this)
