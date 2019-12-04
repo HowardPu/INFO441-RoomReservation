@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import {Button} from 'react-bootstrap'
 import {Link} from 'react-router-dom';
 
 // This is the authentication button
@@ -11,9 +12,9 @@ export class AuthButton extends Component {
 
     render() {
         return(
-            <button className="btn btn-primary mr-2" onClick={() => {
+            <Button variant="danger" className="btn btn-primary mr-2" onClick={() => {
                 this.props.signOutHandler()
-            }}>Log Off</button>
+            }}>Logout</Button>
         )
     }
 }

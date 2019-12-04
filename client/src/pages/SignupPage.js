@@ -156,13 +156,6 @@ export class Signup extends React.Component {
                         </div>
                     </div>
                     <div className="sign-up-item button-container">
-                        <div>
-                            <button className="btn btn-danger mr-2" 
-                                    onClick={() => this.setState({redirect: true})}>
-                                    Cancel
-                            </button>
-                        </div>
-
                         <div> 
                             <button className="btn btn-primary mr-2" disabled={this.state.disabled} onClick={() => {
                                 this.props.signUpHandler(this.state.email, this.state.password, this.state.username)}}>

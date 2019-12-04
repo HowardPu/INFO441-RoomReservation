@@ -195,7 +195,7 @@ class App extends React.Component {
               }}/>
 
               <Route exact path='/user' render={(routerProps) => {
-                  return <User {...routerProps} appState={this.state} updateState={this.updateState}/>
+                  return <User {...routerProps} appState={this.state} updateState={this.updateState} signOutHandler={this.handleSignOut} />
               }}/>
 
               <Route exact path='/reserve' render={(routerProps) => {
