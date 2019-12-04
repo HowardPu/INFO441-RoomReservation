@@ -1,6 +1,4 @@
 import React from 'react';
-import AddRoomForm from '../components/AddRoomForm'
-import DeleteRoomForm from '../components/DeleteRoomForm'
 import {AuthButton} from '../components/AuthButton'
 import {Redirect, Link} from 'react-router-dom';
 
@@ -18,8 +16,6 @@ class Admin extends React.Component {
       "issues": false
     }
   }
-  
-
   
   render() {
     let userType = this.props.appState.userType
@@ -73,10 +69,6 @@ class Admin extends React.Component {
                       Update Issues
               </button>
           </div>
-              {/* <hr /> 
-              <AddRoomForm />
-              <hr />
-              <DeleteRoomForm /> */}
         </div>
     );
   }

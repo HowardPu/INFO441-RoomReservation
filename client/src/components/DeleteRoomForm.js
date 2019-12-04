@@ -3,11 +3,8 @@ import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import Alert from 'react-bootstrap/Alert'
 
-const host = ""
-const jsonHeader =  {
-    'Content-Type': 'application/json',
-    'Authorization': localStorage.getItem('auth')
-}
+
+const host = "https://api.html-summary.me/"
 const delRoomURL = host + "v1/room"
 
 class DeleteRoomForm extends React.Component {
@@ -18,6 +15,7 @@ class DeleteRoomForm extends React.Component {
             name: '',
             notification: ''
         }
+        this.patchData = this.patchData.bind(this)
     }
 
     onChange(e) {
@@ -37,26 +35,21 @@ class DeleteRoomForm extends React.Component {
         } else {
             let userInput = {roomName: this.state.name}
             console.log(userInput)
-            this.patchData(delRoomURL, userInput, jsonHeader);
+            this.patchData(delRoomURL, userInput);
         }
     }
 
-    patchData(url, userInput, headerInput) {
+    patchData(url, userInput) {
         fetch(url, {
             method: 'DELETE',
             mode: "cors",
-            headers: headerInput, 
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': this.props.appState.authToken
+            }, 
             body: JSON.stringify(userInput)
-        }).then(resp => {
-            if (resp.ok) {
-                return resp.json();
-            } else {
-                throw new Error(resp.status)
-            }
-        }).then(data => {
-            console.log(data);
-            let mes = "successfully deleted room" + this.state.name;
-            this.setState({notification: mes})
+        }).then(() => {
+            this.props.setResearch()
         }).catch(err => {
             var errMes = err.message
             console.log(err)
@@ -69,7 +62,6 @@ class DeleteRoomForm extends React.Component {
         return (
             <section>
                 <h2>Delete Room</h2>
-                {this.state.notification && <Alert variant="success">{this.state.notification}</Alert>}
                 {this.state.errMes && <div className="errMes">{this.state.errMes}</div>}
                 <div className="formContainer">
                     <Form>
@@ -82,8 +74,6 @@ class DeleteRoomForm extends React.Component {
                         </Form.Group>
 
                         <Button 
-                            variant="danger" 
-                            type="submit"
                             onClick={(e)=>{this.onSubmit(e)}}>
                             Delete Room
                         </Button>
