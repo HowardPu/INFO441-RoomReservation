@@ -12,10 +12,73 @@ For users who wish to reserve a room for a meeting, without relevant room inform
 ### Why do you as developers want to build this application?
 We encounter the room reservation problem every day, while the existing solutions don’t really address these issues. For example, the existing library room reservation system at the University of Washington doesn’t provide a live update while students reserve study rooms, which requires students to constantly refresh the page just in case of their rooms get reserved by others. In further, most of the solutions do not include a way for administrators to manage/update rooms in a convenient way. We as developers hope to implement a better solution to help organizations and companies like the University of Washington who have a hard time to utilize and manage their spaces.
  
-## Technical Description
-### Infrastucture
-![Project Structure](././readmeImages/server-structure.png)
+## Final Technical Description
 
+### Final Infrastucture
+![Project Structure](././readmeImages/server-structure-updated.png)
+
+### Endpoints, Methods, Description
+
+#### Gateway
+**/v1/users**: Signup 
+
+* POST: Write user information to the MSSQL, begin session for the new user
+
+**v1/sessions**: Login
+
+* POST: Authenticate a user in Reddis
+
+**v1/sessions/mine**: Logout
+
+* DELETE: end session for user
+
+**/ws**: Create Websocket for authenticated user
+
+<br />
+
+
+#### Reseravation Microservice
+
+**/v1/room**: Manage Room
+
+* GET: search room by querries (roomname, capacity, floor, room type)
+* POST: (for admin only) write room information/Add a room to database
+* DELETE: (for admin only) delete a room from database
+
+**/v1/reserve**: Manage Reservation
+
+* GET: get all reservation information for the specific user
+* POST: create a new room reservation for an authenticated user
+* DELETE: cancel a reservation that the user has
+
+**v1/specificRoom**: Manage Equipments in a specific room
+
+* GET: get all equipment in a specific room
+* POST: (for admin only) add an equipment to a specific room
+* DELETE:(for admin only) delete an equipment in a specific room
+
+**v1/equip**: Manage All the Equipments in the building
+
+* GET: get all equipments in the building
+* POST: (for admin only) add an equipment to a database
+* DELETE: (for admin only) delete an equipment in the database
+
+**v1/issue**: Manage All the issues in the building
+
+* GET: get all issues based on qurries(all, unsolved, uncomfirmed, solved, comfirmed)
+* POST: report an issue
+* PATCH: (for admin only) update the issue status(solved / confirmed)
+
+**v1/roomUsedTime**
+
+* GET: get all unavailable timeslot for a room at specific date
+
+<br />
+
+
+## Initial Technical Plan
+### Initial Infrastucture
+![Project Structure](././readmeImages/server-structure.png)
 
 ### Database
 For database selection, we decide to use Redis for client-server communication since this DB has good management on session expiration, and mapping between user and authentication information. And for the user-room database, we decided to use the relational database since the scope of this application is small (in an organization, the volume of transactions for room management is not huge), while accuracy and data integrity does play an important role in the room management.
