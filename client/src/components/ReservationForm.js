@@ -5,7 +5,7 @@ import Alert from 'react-bootstrap/Alert'
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 
-const host = "http://api.html-summary.me/"
+const host = "https://api.html-summary.me/"
 const jsonHeader =  {
     'Content-Type': 'application/json',
     'Authorization': localStorage.getItem('auth')

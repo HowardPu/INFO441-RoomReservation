@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -186,7 +187,7 @@ func (s *ReservationStore) ReserveRoom(userName string, roomName string, beginTi
 		return -1, tranErr
 	}
 
-	latestID, findErr := s.GetLatestInsertedID(`'tblReservation'`)
+	latestID, findErr := s.GetLatestInsertedID(`SELECT IDENT_CURRENT('tblReservation')`)
 
 	return latestID, findErr
 }
@@ -319,7 +320,7 @@ func (s *ReservationStore) AddRoom(roomName string, floor int, capacity int, roo
 		return -1, tranErr
 	}
 
-	latestID, findErr := s.GetLatestInsertedID(`'tblRoom'`)
+	latestID, findErr := s.GetLatestInsertedID(`SELECT IDENT_CURRENT('tblRoom')`)
 
 	return latestID, findErr
 }
@@ -356,7 +357,7 @@ func (s *ReservationStore) AddEquipment(eqipName string, userName string) (int, 
 		return -1, tranErr
 	}
 
-	latestID, findErr := s.GetLatestInsertedID(`'tblEquipment'`)
+	latestID, findErr := s.GetLatestInsertedID(`SELECT IDENT_CURRENT('tblEquipment')`)
 
 	return latestID, findErr
 }
@@ -377,7 +378,7 @@ func (s *ReservationStore) AddEquipmentToRoom(equipName string, roomName string,
 		return -1, tranErr
 	}
 
-	latestID, findErr := s.GetLatestInsertedID(`'tblEquipInRoom'`)
+	latestID, findErr := s.GetLatestInsertedID(`SELECT IDENT_CURRENT('tblEquipInRoom')`)
 
 	return latestID, findErr
 }
@@ -395,12 +396,11 @@ func (s *ReservationStore) DeleteEquipmentInRoom(roomEquipID int, userName strin
 	return tranErr
 }
 
-func (s *ReservationStore) GetLatestInsertedID(tableName string) (int, error) {
+func (s *ReservationStore) GetLatestInsertedID(query string) (int, error) {
 	// get id of latest insert row of a table
 	// return any err if the id cannot find
-	latestInsertedSQL := `SELECT IDENT_CURRENT(?)`
 
-	lastestID, lastestErr := s.db.Query(latestInsertedSQL, tableName)
+	lastestID, lastestErr := s.db.Query(query)
 
 	if lastestErr != nil {
 		return -1, lastestErr
@@ -409,7 +409,7 @@ func (s *ReservationStore) GetLatestInsertedID(tableName string) (int, error) {
 	var result int
 
 	lastestID.Next()
-	scanErr := lastestID.Scan(result)
+	scanErr := lastestID.Scan(&result)
 	lastestID.Close()
 
 	if scanErr != nil {
@@ -426,7 +426,7 @@ func (s *ReservationStore) GetReservationLists(userName string) ([]*Reservation,
 		FROM tblReservation R 
 		JOIN tblUser U ON U.userID = R.userID
 		JOIN tblRoom RM ON RM.roomID = R.roomID
-		JOIN tblRoomType RT ON RT.roomTypeID = R.reservationID
+		JOIN tblRoomType RT ON RT.roomTypeID = RM.roomTypeID
 		WHERE U.userName = ?
 	`
 	reservationInfo, err := s.db.Query(query, userName)
@@ -452,10 +452,22 @@ func (s *ReservationStore) GetReservationLists(userName string) ([]*Reservation,
 			return result, scanErr
 		}
 
+		formatTranDate, tranErr := s.ParseDate(tranDate)
+
+		if tranErr != nil {
+			return result, tranErr
+		}
+
+		formatResDate, resErr := s.ParseDate(resDate)
+
+		if resErr != nil {
+			return result, resErr
+		}
+
 		res := Reservation{
 			ID:          id,
-			TranDate:    tranDate,
-			ReserveDate: resDate,
+			TranDate:    formatTranDate,
+			ReserveDate: formatResDate,
 			RoomName:    roomName,
 			BeginTime:   beginTime,
 			EndTime:     endTime,
@@ -475,6 +487,7 @@ func (s *ReservationStore) GetRoomLists(roomName string, capacity *int, floor *i
 	// if capacity is nil, it means any capacity
 	// if floor is nil, it means any floor
 	// if roomType is "*", it means any room type
+
 	query := `
 		SELECT R.roomID, R.roomName, R.capacity, R.roomFloor, RT.roomTypeName 
 		FROM tblRoom R JOIN tblRoomType RT ON R.roomTypeID = RT.roomTypeID
@@ -508,7 +521,7 @@ func (s *ReservationStore) GetRoomLists(roomName string, capacity *int, floor *i
 		if roomName == "*" || roomName == rName {
 			if capacity == nil || *capacity == cap {
 				if floor == nil || *floor == flr {
-					if rType == "*" || roomType == rType {
+					if roomType == "*" || roomType == rType {
 						curRoom := Room{
 							ID:       id,
 							RoomName: rName,
@@ -571,21 +584,21 @@ func (s *ReservationStore) GetIssues(roomName string, searchType string) ([]*Iss
 	// Confirmed: confirmed issues of a room
 	// Solved: solved issues of a room
 	queries := map[string]string{
-		"All": `SELECT RI.roomIssueID, R.roomName, RI.roomIssueBody, RI.createDate 
+		"All": `SELECT RI.roomIssueID, R.roomName, RI.roomIssueBody, RI.createDate, RI.solveDate, RI.confirmDate 
 		FROM tblRoomIssue RI JOIN tblRoom R ON R.roomID = RI.roomID`,
-		"RoomAll": `SELECT RI.roomIssueID, R.roomName, RI.roomIssueBody, RI.createDate 
+		"RoomAll": `SELECT RI.roomIssueID, R.roomName, RI.roomIssueBody, RI.createDate, RI.solveDate, RI.confirmDate
 		FROM tblRoomIssue RI JOIN tblRoom R ON R.roomID = RI.roomID
 		WHERE R.roomName = ?`,
-		"Unconfimed": `SELECT RI.roomIssueID, R.roomName, RI.roomIssueBody, RI.createDate 
+		"Unconfrimed": `SELECT RI.roomIssueID, R.roomName, RI.roomIssueBody, RI.createDate, RI.solveDate, RI.confirmDate
 		FROM tblRoomIssue RI JOIN tblRoom R ON R.roomID = RI.roomID
 		WHERE R.roomName = ? AND RI.confirmDate IS NULL`,
-		"Unsolved": `SELECT RI.roomIssueID, R.roomName, RI.roomIssueBody, RI.createDate 
+		"Unsolved": `SELECT RI.roomIssueID, R.roomName, RI.roomIssueBody, RI.createDate, RI.solveDate, RI.confirmDate 
 		FROM tblRoomIssue RI JOIN tblRoom R ON R.roomID = RI.roomID
 		WHERE R.roomName = ? AND RI.solveDate IS NULL`,
-		"Confirmed": `SELECT RI.roomIssueID, R.roomName, RI.roomIssueBody, RI.createDate 
+		"Confirmed": `SELECT RI.roomIssueID, R.roomName, RI.roomIssueBody, RI.createDate, RI.solveDate, RI.confirmDate 
 		FROM tblRoomIssue RI JOIN tblRoom R ON R.roomID = RI.roomID
 		WHERE R.roomName = ? AND RI.confirmDate IS NOT NULL`,
-		"Solved": `SELECT RI.roomIssueID, R.roomName, RI.roomIssueBody, RI.createDate 
+		"Solved": `SELECT RI.roomIssueID, R.roomName, RI.roomIssueBody, RI.createDate, RI.solveDate, RI.confirmDate 
 		FROM tblRoomIssue RI JOIN tblRoom R ON R.roomID = RI.roomID
 		WHERE R.roomName = ? AND RI.solveDate IS NOT NULL`,
 	}
@@ -595,15 +608,22 @@ func (s *ReservationStore) GetIssues(roomName string, searchType string) ([]*Iss
 	result := []*Issue{}
 	query, found := queries[searchType]
 	if !found {
-		return result, nil
+		return result, errors.New("Invalid type params")
 	}
 
 	// search target issues
 	// return errors if cannot search
-	issueInfo, err := s.db.Query(query, roomName)
+	var issueInfo *sql.Rows
+	var err error
+	if searchType == "All" {
+		issueInfo, err = s.db.Query(query)
+	} else {
+		issueInfo, err = s.db.Query(query, roomName)
+	}
+
 	defer issueInfo.Close()
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
 	// parse each row into issue objects
@@ -613,15 +633,40 @@ func (s *ReservationStore) GetIssues(roomName string, searchType string) ([]*Iss
 		var roomName string
 		var body string
 		var createDate string
-		scanErr := issueInfo.Scan(&issueID, &roomName, &body, &createDate)
+		var solved sql.NullString
+		var confirm sql.NullString
+		scanErr := issueInfo.Scan(&issueID, &roomName, &body, &createDate, &solved, &confirm)
 		if scanErr != nil {
 			return result, scanErr
 		}
+
+		solvedDate := "N/A"
+
+		if solved.Valid {
+			formatedSolveDate, solveFormatErr := s.ParseDate(solved.String)
+			if solveFormatErr != nil {
+				return result, solveFormatErr
+			}
+			solvedDate = formatedSolveDate
+		}
+
+		confirmDate := "N/A"
+
+		if confirm.Valid {
+			formatedConfirmDate, confirmFormatErr := s.ParseDate(confirm.String)
+			if confirmFormatErr != nil {
+				return result, confirmFormatErr
+			}
+			confirmDate = formatedConfirmDate
+		}
+
 		currentIssue := Issue{
-			ID:         issueID,
-			RoomName:   roomName,
-			Body:       body,
-			CreateDate: createDate,
+			ID:          issueID,
+			RoomName:    roomName,
+			Body:        body,
+			CreateDate:  createDate,
+			ConfirmDate: confirmDate,
+			SolveDate:   solvedDate,
 		}
 		result = append(result, &currentIssue)
 	}
@@ -651,7 +696,7 @@ func (s *ReservationStore) AddIssue(issueBody string, roomName string) (int, err
 		return -1, tranErr
 	}
 
-	latestID, findErr := s.GetLatestInsertedID(`'tblEquipInRoom'`)
+	latestID, findErr := s.GetLatestInsertedID(`SELECT IDENT_CURRENT('tblEquipInRoom')`)
 
 	return latestID, findErr
 }
@@ -740,4 +785,14 @@ func (s *ReservationStore) DeleteEquipment(equipName string, username string) er
 	_, tranErr := s.db.Exec(transaction, equipName, username)
 
 	return tranErr
+}
+
+// "2019-12-03T00:00:00Z"
+func (s *ReservationStore) ParseDate(date string) (string, error) {
+	dates := strings.Split(date, "T")
+	if len(dates) != 2 {
+		return "", errors.New("Wrong Date Format")
+	}
+	return dates[0], nil
+
 }

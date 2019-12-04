@@ -5,7 +5,7 @@ import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
 import {Redirect} from 'react-router-dom';
 
-const host = "http://api.html-summary.me"
+const host = "https://api.html-summary.me"
 const jsonHeader =  {
     'Authorization': localStorage.getItem('auth')
 }

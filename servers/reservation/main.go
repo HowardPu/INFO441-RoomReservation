@@ -8,9 +8,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/streadway/amqp"
 )
+
+// pie is on table for supper
+// the pie was on the table for supper
 
 var server = "mssql441.c2mbdnajn2pb.us-east-1.rds.amazonaws.com"
 var user = "admin"
@@ -23,27 +27,14 @@ var signingKey = "JusticsFromAbove"
 var connString = fmt.Sprintf("server=%s;user id=%s;password=%s;database=%s;port=%s", server, user, password, database, port)
 var db, dbERR = sql.Open("mssql", connString)
 
-var conn, err = amqp.Dial("amqp://guest:guest@localhost:5672/")
-
-var ch, chanErr = conn.Channel()
-
 var resStore = M.NewReservationStore(db)
 
 var queueName string = "reservationQueue"
 
-var _, queueErr = ch.QueueDeclare(
-	queueName, // name
-	true,      // durable
-	false,     // delete when unused
-	false,     // exclusive
-	false,     // no-wait
-	nil,       // arguments
-)
-
 var ctx = H.HandlerContext{
 	RabbitQueueName:  queueName,
 	ReservationStore: resStore,
-	RabbitConnection: ch,
+	//RabbitConnection: ch,
 }
 
 // main is the main entry point for the server
@@ -60,6 +51,25 @@ func main() {
 	  that occur when trying to start the web server.
 	*/
 
+	var conn, err = amqp.Dial("amqp://guest:guest@rabbit:5672/")
+
+	for err != nil {
+		failOnError(err, "RabbitMQ conn failed: ")
+		time.Sleep(1 * time.Second)
+		conn, err = amqp.Dial("amqp://guest:guest@rabbit:5672/")
+	}
+
+	var ch, chanErr = conn.Channel()
+
+	var _, queueErr = ch.QueueDeclare(
+		queueName, // name
+		true,      // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
+	)
+
 	if dbERR != nil {
 		failOnError(dbERR, "SQL conn failed: ")
 	}
@@ -75,6 +85,8 @@ func main() {
 	if queueErr != nil {
 		failOnError(queueErr, "Create Queue Failed: ")
 	}
+
+	ctx.RabbitConnection = ch
 
 	addr := os.Getenv("ADDR")
 	defer conn.Close()

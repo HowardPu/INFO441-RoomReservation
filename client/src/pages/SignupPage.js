@@ -3,152 +3,182 @@ import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import {Redirect, Link} from 'react-router-dom';
 
-const host = "http://api.html-summary.me/"
+const host = "https://api.html-summary.me/"
 const signupURL = host + "/v1/users"
 const jsonHeader =  {'Content-Type': 'application/json'}
 
-class Signup extends React.Component {
+export class Signup extends React.Component {
     constructor(props) {
-        super(props);
+        super(props)
         this.state = {
-            errMes: '',
             email: '',
             password: '',
+            passwordReenter: '',
             username: '',
-            passwordConf: '',
-            signedup: false,
-        }
+            disabled: true
+        };
     }
 
-    onChange(e) {
-        this.setState(
-            {
-                notification: '',
-                errMes: ''
-            }
-        )
-        switch (e.target.id) {
-            case "signupEmail":
-                this.setState({email: e.target.value});
-                break;
-            case "signupUsername":
-                this.setState({username: e.target.value});
-                break;
-            case "signupPassword":
-                this.setState({password: e.target.value});
-                break;
-            case "signupPasswordConf":
-                    this.setState({passwordConf: e.target.value});
-                    break;
-            default:
-                break;
-        }
-    }
-    
-    onSubmit(e){
-        e.preventDefault();
-        if (!this.state.username) {
-            this.setState({errMes: "Please enter username"})
-        } else if (!this.state.email) {
-            this.setState({errMes: "Please enter email"})
-        } else if (!this.state.password) {
-            this.setState({errMes: "Please enter password"})
-        }  else if (!this.state.passwordConf) {
-            this.setState({errMes: "Please type in you password again to confirm password"})
-        }  else if (this.state.passwordConf !== this.state.password) {
-            this.setState({errMes: "Password doesn't match with the confirmation!"})
-        } else {
-            let userInput = {
-                email: this.state.email,
-                password: this.state.password,
-                passwordConf: this.state.passwordConf,
-                userName: this.state.username
-            }
-            this.postData(signupURL, userInput, jsonHeader);
-        }
+    // set the state with corresponding event field and value
+    // and then detect whether disable the `confirm` button or not
+    handleChange(event) {
+        let value = event.target.value;
+        let fieid = event.target.name;
+        let change = this.state;
+        change[fieid] = value;
+        change.errorMessage = null;
+        change.disabled = this.getEmailStatus() !== " alert alert-success" || 
+                            this.getPasswordStatus() !== " alert alert-success" ||
+                            this.getReenterPasswordStatus() !== " alert alert-success" ||
+                            this.getUserNameStatus() !== " alert alert-success";
+        this.setState(change);
     }
 
-    postData(url, userInput, headerInput) {
-        fetch(url, {
-            method: 'POST',
-            mode: "cors",
-            headers: headerInput, 
-            body: JSON.stringify(userInput)
-        }).then(resp => {
-            if (resp.ok) {
-                if (!headerInput.Authorization && resp.headers.get('Authorization')) {
-                    localStorage.setItem('auth', resp.headers.get('Authorization'));
+    // when the email is not well formatted, it will give email input box warning color
+    // when the email is well formatted, it will give emaol input box success color
+    // when there is no input, it will give email input box no notification color 
+    getEmailStatus() {
+        if(this.state.email.length > 0) {
+            let split = this.state.email.split("@");
+            if(split.length === 2) {
+                let last = split[1].split(".");
+                if(last.length >= 2) {
+                    let suffix = last[last.length - 1];
+                    if(suffix === "com" || suffix === "edu" || suffix === "gov" || suffix === "org") {
+                        return(" alert alert-success");
+                    }
                 }
-                return resp.json();
-            } else {
-                throw new Error(resp.status)
             }
-        }).then(data => {
-            console.log(data);
-            this.setState({signedup: true})
-        }).catch(err => {
-            var errMes = err.message
-            console.log(err)
-            this.setState({errMes});
-        })
+            return(" alert alert-warning");
+        } else {
+            return("");
+        } 
+    }
+
+    // give the password input box danger color if the length is less than 6
+    // give the password input box success color if the length is greater than 6
+    // and give the password input box no extra color if there is no imput
+    getPasswordStatus() {
+        if(this.state.password.length > 0) {
+            if(this.state.password.length < 6) {
+                return(" alert alert-warning");
+            } else {
+                return(" alert alert-success");
+            }
+        } else {
+            return("");
+        }
+    }
+
+    // this method will check whether the reenter password is the same as the input password
+    // if the same, give input box success color
+    // if not, give input box danger color
+    // if no input, give it no extra color
+    getReenterPasswordStatus() {
+        if(this.state.passwordReenter.length > 0) {
+            if(this.state.password === this.state.passwordReenter && this.state.password.length >= 6) {
+                return(" alert alert-success");
+            } else {
+                return(" alert alert-warning");
+            }
+        } else {
+            return("");
+        }
+    }
+
+    // if the user enters something, give username input box success color
+    // or no extra color otherwise
+    getUserNameStatus() {
+        if(this.state.username.length > 0) {
+            return(" alert alert-success");
+        } else {
+            return("");
+        }
     }
 
     render() {
-        if (this.state.signedup === true) {
-            return (<Redirect to="/user" />)
+        let userType = this.props.appState.userType
+        if (userType === "Admin") {
+            return <Redirect to='/admin'/>;
         }
-        return (
-            <div>
-                <h1>Sign up</h1>
-                <br />
-                <Form>
-                    {this.state.errMes && <div className="errMes">{this.state.errMes}</div>}
-                    <Form.Group controlId="signupEmail">
-                        <Form.Label>Email address</Form.Label>
-                        <Form.Control 
-                            type="email" 
-                            value={this.state.email}
-                            onChange={(e) => {this.onChange(e)}}
-                            placeholder="Enter email" />
-                        <Form.Text className="text-muted">
-                        We'll never share your email with anyone else.
-                        </Form.Text>
-                    </Form.Group>
+        if (userType === "Normal") {
+            return <Redirect to='/user'/>;
+        }
+        if(this.state.redirect) {
+            return <Redirect to='/signin'/>
+        }
+        return(
+            <div className="sign-up-container">
+                <div className="hypnotize sign-up-content" >
+                    <div className="sign-up-item">
+                        <h1>Your reservation begins here.</h1>
+                    </div>
+                    {this.state.errorMessage &&
+                        <div><p className="alert alert-warning">{this.state.errorMessage}</p></div>
+                    }
+                    <div className="sign-up-item"> 
+                        <h2>Please enter your email</h2>
+                        <div className={"form-group" + this.getEmailStatus()}>
+                            <input className="form-control"
+                                name="email"
+                                value={this.state.email}
+                                onChange={(event) => this.handleChange(event)}
+                                placeholder="Example: JohnSmith@gmail.com"/>
+                        </div>
+                    </div>
 
-                    <Form.Group controlId="signupUsername">
-                        <Form.Label>Username</Form.Label>
-                        <Form.Control 
-                            value={this.state.username}
-                            onChange={(e) => {this.onChange(e)}}
-                            placeholder="Username" />
-                    </Form.Group>
+                    <div className="sign-up-item"> 
+                        <h2>Please enter your password</h2>
+                        <div className={"form-group" + this.getPasswordStatus()}>
+                            <input type="password" className="form-control"
+                                name="password"
+                                value={this.state.password}
+                                onChange={(event) => this.handleChange(event)}
+                                placeholder="Longer than 6 characters"/>
+                        </div>
+                    </div>
+                    <div className="sign-up-item"> 
+                        <h2>Please reenter your password</h2>
+                        <div className={"form-group" + this.getReenterPasswordStatus()}>
+                            <input type="password" className="form-control"
+                                name="passwordReenter"
+                                value={this.state.passwordReenter}
+                                onChange={(event) => this.handleChange(event)}/>
+                        </div>
+                    </div>
 
-                    <Form.Group controlId="signupPassword">
-                        <Form.Label>Password</Form.Label>
-                        <Form.Control 
-                            value={this.state.password}
-                            onChange={(e) => {this.onChange(e)}}
-                            type="password" 
-                            placeholder="Password" />
-                    </Form.Group>
+                    <div className="sign-up-item"> 
+                        <h2>Please enter your username</h2>
+                        <div className={"form-group" + this.getUserNameStatus()}>
+                            <input className="form-control"
+                                name="username"
+                                value={this.state.username}
+                                onChange={(event) => this.handleChange(event)}
+                                placeholder="Example: uwlaziestperson1"/>
+                        </div>
+                    </div>
+                    <div className="sign-up-item button-container">
+                        <div>
+                            <button className="btn btn-danger mr-2" 
+                                    onClick={() => this.setState({redirect: true})}>
+                                    Cancel
+                            </button>
+                        </div>
 
-                    <Form.Group controlId="signupPasswordConf">
-                        <Form.Label>Confirm your Password</Form.Label>
-                        <Form.Control 
-                            type="password" 
-                            value={this.state.passwordConf}
-                            onChange={(e) => {this.onChange(e)}}
-                            placeholder="Password Confirmation" />
-                    </Form.Group>
+                        <div> 
+                            <button className="btn btn-primary mr-2" disabled={this.state.disabled} onClick={() => {
+                                this.props.signUpHandler(this.state.email, this.state.password, this.state.username)}}>
+                                    Sign Up
+                            </button>
+                        </div>
+                    </div>
 
-                    <Button variant="primary" type="submit" onClick={(e) => this.onSubmit(e)}>
-                        Submit
-                    </Button>
-                </Form>
-                <div>Already have an account? <Link to="/signin">Sign in</Link></div>
+                    <div className="sign-up-item"> 
+                        <Link to="/sign-in">Have an account? One step to your expedition!</Link>
+                    </div> 
+                </div>
             </div>
         );
     }
 }
-
 export default Signup;

@@ -1,7 +1,7 @@
 import React from 'react';
 import ReservationForm from '../components/ReservationForm';
 
-const host = "http://api.html-summary.me/" //!!change it later
+const host = "https://api.html-summary.me/" //!!change it later
 const reserveURL = host + "/v1/reserve"
 const jsonHeader =  {
     'Content-Type': 'application/json',

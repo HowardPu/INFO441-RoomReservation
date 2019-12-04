@@ -5,7 +5,7 @@ import {Redirect} from 'react-router-dom';
 import Alert from 'react-bootstrap/Alert'
 
 
-const host = "http://api.html-summary.me"
+const host = "https://api.html-summary.me"
 const jsonHeader =  {
     'Authorization': localStorage.getItem('auth')
 }

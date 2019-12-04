@@ -19,10 +19,15 @@ type RoomForm struct {
 	RoomTypeName string `json:"roomType"`
 }
 
+type IssueForm struct {
+	ID   int    `json:"issueID"`
+	Type string `json:"type"`
+}
+
 type ReserveForm struct {
-	Year      string `json:"year"`
-	Month     string `json:"month"`
-	Day       string `json:"day"`
+	Year      int    `json:"year"`
+	Month     int    `json:"month"`
+	Day       int    `json:"day"`
 	RoomName  string `json:"roomName"`
 	BeginTime int    `json:"beginTime"`
 	Duration  int    `json:"duration"`
@@ -87,6 +92,7 @@ var UsedTimeMethod map[string]bool = map[string]bool{
 	}
 */
 
+// done
 func (ctx *HandlerContext) RoomHandler(w http.ResponseWriter, r *http.Request) {
 	// if the user is not authenticated, throw unauthorized
 	user := Authenticate(r)
@@ -99,23 +105,6 @@ func (ctx *HandlerContext) RoomHandler(w http.ResponseWriter, r *http.Request) {
 	checkErr := CheckRequest(&w, r, RoomMethods)
 
 	if checkErr != nil {
-		return
-	}
-
-	// read the request body
-	// throw any error
-	body, readErr := ioutil.ReadAll(r.Body)
-	if readErr != nil {
-		http.Error(w, "Cannot read Request Body", http.StatusBadRequest)
-		return
-	}
-
-	// marshal the data into map
-	// and throw any error
-	bodyJSON := make(map[string]string)
-	marshalErr := json.Unmarshal(body, &bodyJSON)
-	if marshalErr != nil {
-		http.Error(w, "Cannot marshal Request Body", http.StatusBadRequest)
 		return
 	}
 
@@ -205,50 +194,26 @@ func (ctx *HandlerContext) RoomHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get the room name field(requied for all methods besides get)
-	// throw bad request if not found
-	roomName, nameFound := bodyJSON["roomName"]
-	if !nameFound {
-		http.Error(w, "No Room Name!", http.StatusBadRequest)
+	// read the request body
+	// throw any error
+	body, readErr := ioutil.ReadAll(r.Body)
+	if readErr != nil {
+		http.Error(w, "Cannot read Request Body", http.StatusBadRequest)
 		return
 	}
 
 	if r.Method == http.MethodPost {
-		capInReq, capFound := bodyJSON["capacity"]
-		if !capFound {
-			http.Error(w, "Capacity required for adding room", http.StatusBadRequest)
-			return
-		}
-
-		capInt, parseCapErr := strconv.Atoi(capInReq)
-		if parseCapErr != nil {
-			http.Error(w, "Parse Capacity Field Failed", http.StatusBadRequest)
-			return
-		}
-
-		floorInReq, flrFound := bodyJSON["floor"]
-		// get the floor field in json
-		// if exist, parse it and throw any error
-		if !flrFound {
-			http.Error(w, "Floor required for adding room", http.StatusBadRequest)
-			return
-		}
-
-		flrInt, parseFlrErr := strconv.Atoi(floorInReq)
-		if parseFlrErr != nil {
-			http.Error(w, "Parse Floor Field Failed", http.StatusBadRequest)
-			return
-		}
-
-		roomTypeInReq, typeFound := bodyJSON["roomType"]
-		if !typeFound {
-			http.Error(w, "Room Type Requied for adding room", http.StatusBadRequest)
+		roomForm := RoomForm{}
+		marshalErr := json.Unmarshal(body, &roomForm)
+		if marshalErr != nil {
+			http.Error(w, "Cannot marshal Request Body", http.StatusBadRequest)
 			return
 		}
 
 		// add new room into the db
 		// and throw any error if existed
-		roomID, insertErr := ctx.ReservationStore.AddRoom(roomName, flrInt, capInt, roomTypeInReq, user.Name)
+		roomID, insertErr := ctx.ReservationStore.AddRoom(roomForm.RoomName, roomForm.Floor,
+			roomForm.Capcity, roomForm.RoomTypeName, user.Name)
 
 		if insertErr != nil {
 			message := fmt.Sprintf("Cannot add Room: %v", insertErr)
@@ -256,7 +221,7 @@ func (ctx *HandlerContext) RoomHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// write room-created in rabbitMq
-		mqMessage := fmt.Sprintf(`{"type":"room-create", "roomName":%v, "id":%d}`, roomName, roomID)
+		mqMessage := fmt.Sprintf(`{"type":"room-create", "roomName":%v, "id":%d}`, roomForm.RoomName, roomID)
 		ctx.PublishMessage(mqMessage)
 
 		// write application/json header with status code CREATED
@@ -269,6 +234,23 @@ func (ctx *HandlerContext) RoomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodDelete {
+
+		// marshal the data into map
+		// and throw any error
+		bodyJSON := make(map[string]string)
+		marshalErr := json.Unmarshal(body, &bodyJSON)
+		if marshalErr != nil {
+			http.Error(w, "Cannot marshal Request Body", http.StatusBadRequest)
+			return
+		}
+
+		// get the room name field(requied for all methods besides get)
+		// throw bad request if not found
+		roomName, nameFound := bodyJSON["roomName"]
+		if !nameFound {
+			http.Error(w, "No Room Name!", http.StatusBadRequest)
+			return
+		}
 		// delete the room with given room name
 		// and throw any error if occured
 		roomID, tranErr := ctx.ReservationStore.DeleteRoom(roomName, user.Name)
@@ -303,6 +285,8 @@ func (ctx *HandlerContext) RoomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	GET: nothing
 */
+
+// done
 func (ctx *HandlerContext) RoomReserveHandler(w http.ResponseWriter, r *http.Request) {
 	// authenticate any user,
 	// throw unauthorized if the user not sign in
@@ -367,7 +351,7 @@ func (ctx *HandlerContext) RoomReserveHandler(w http.ResponseWriter, r *http.Req
 			}
 
 			// create date string
-			date := newResForm.Year + "-" + newResForm.Month + "-" + newResForm.Day
+			date := fmt.Sprintf("%d-%d-%d", newResForm.Year, newResForm.Month, newResForm.Day)
 			userName := user.Name
 
 			// reserve the room at given time spot
@@ -441,6 +425,8 @@ func (ctx *HandlerContext) RoomReserveHandler(w http.ResponseWriter, r *http.Req
 	}
 
 */
+
+// checked
 func (ctx *HandlerContext) EquipmentHandler(w http.ResponseWriter, r *http.Request) {
 	user := Authenticate(r)
 	if user == nil {
@@ -463,8 +449,15 @@ func (ctx *HandlerContext) EquipmentHandler(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		// encode the result as json into response
-		jsonStr := "[\"" + strings.Join(result, "\",\"") + "\"]"
+		jsonStr := "["
+
+		for i := 0; i < len(result); i++ {
+			jsonStr = jsonStr + "\"" + result[i] + "\"" + ", "
+		}
+
+		jsonStr = strings.TrimSuffix(jsonStr, ", ")
+
+		jsonStr = jsonStr + "]"
 		responseBody := fmt.Sprintf(`{"result": %v}`, jsonStr)
 
 		w.Header().Add("Content-Type", "application/json")
@@ -556,6 +549,7 @@ func (ctx *HandlerContext) EquipmentHandler(w http.ResponseWriter, r *http.Reque
 	w.Write([]byte("Equipment Updated!"))
 }
 
+// checked
 func (ctx *HandlerContext) SpecificRoomHandler(w http.ResponseWriter, r *http.Request) {
 	user := Authenticate(r)
 	if user == nil {
@@ -622,14 +616,15 @@ func (ctx *HandlerContext) SpecificRoomHandler(w http.ResponseWriter, r *http.Re
 		http.Error(w, "Cannot Read Request", http.StatusBadRequest)
 		return
 	}
-	jsonData := make(map[string]string)
-	unmarshalErr := json.Unmarshal(body, &jsonData)
-	if unmarshalErr != nil {
-		http.Error(w, "Cannot Unmarshal Request", http.StatusBadRequest)
-		return
-	}
 
 	if r.Method == http.MethodDelete {
+		jsonData := make(map[string]int)
+		unmarshalErr := json.Unmarshal(body, &jsonData)
+		if unmarshalErr != nil {
+			http.Error(w, "Cannot Unmarshal Request", http.StatusBadRequest)
+			return
+		}
+
 		// for deleting equipment in room
 		// search its id
 		// throw error if not found/cannot parse
@@ -638,15 +633,10 @@ func (ctx *HandlerContext) SpecificRoomHandler(w http.ResponseWriter, r *http.Re
 			http.Error(w, "No Room Equipment ID", http.StatusBadRequest)
 			return
 		}
-		idInt, parseErr := strconv.Atoi(equipRMID)
-		if parseErr != nil {
-			http.Error(w, fmt.Sprintf("Cannot Parse ID: %v", equipRMID), http.StatusBadRequest)
-			return
-		}
 
 		// remove the equipment in a room
 		// and throw any error if occurs
-		rmErr := ctx.ReservationStore.DeleteEquipmentInRoom(idInt, user.Name)
+		rmErr := ctx.ReservationStore.DeleteEquipmentInRoom(equipRMID, user.Name)
 		if rmErr != nil {
 			http.Error(w, fmt.Sprintf("Cannot Remove Equipment for a room: %v", rmErr), http.StatusBadRequest)
 			return
@@ -654,11 +644,17 @@ func (ctx *HandlerContext) SpecificRoomHandler(w http.ResponseWriter, r *http.Re
 
 		// write roomEquip-delete in th rabbitMQ
 		// with status ok
-		mqMessage := fmt.Sprintf(`{"type": "roomEquip-delete", "id": %d}`, idInt)
+		mqMessage := fmt.Sprintf(`{"type": "roomEquip-delete", "id": %d}`, equipRMID)
 		ctx.PublishMessage(mqMessage)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Equip In a room is deleted"))
 	} else {
+		jsonData := make(map[string]string)
+		unmarshalErr := json.Unmarshal(body, &jsonData)
+		if unmarshalErr != nil {
+			http.Error(w, "Cannot Unmarshal Request", http.StatusBadRequest)
+			return
+		}
 		// for add equipment to a room
 		// search roomName and equipName fields
 		// throw anyerror if not found
@@ -691,8 +687,8 @@ func (ctx *HandlerContext) SpecificRoomHandler(w http.ResponseWriter, r *http.Re
 	}
 }
 
+// checked
 func (ctx *HandlerContext) IssueHandler(w http.ResponseWriter, r *http.Request) {
-
 	// get authenticated user
 	// if not exist, throw unauthroized
 	user := Authenticate(r)
@@ -769,14 +765,14 @@ func (ctx *HandlerContext) IssueHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	jsonData := make(map[string]string)
-	unmarshalErr := json.Unmarshal(body, &jsonData)
-	if unmarshalErr != nil {
-		http.Error(w, "Cannot Unmarshal Request", http.StatusBadRequest)
-		return
-	}
-
 	if r.Method == http.MethodPost {
+
+		jsonData := make(map[string]string)
+		unmarshalErr := json.Unmarshal(body, &jsonData)
+		if unmarshalErr != nil {
+			http.Error(w, "Cannot Unmarshal Request", http.StatusBadRequest)
+			return
+		}
 		// find issue body
 		// if it does not exist/empty, return error
 		issueBody, bodyFound := jsonData["body"]
@@ -808,27 +804,15 @@ func (ctx *HandlerContext) IssueHandler(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte("Issue Added"))
 	} else {
-		// get updateType (confirm/solve) and issueID
-		// throw errors if they are not exist or in bad form
-		typeParam, typeFound := jsonData["type"]
-		if !typeFound {
-			http.Error(w, "No Type", http.StatusBadRequest)
-			return
-		}
-
-		issueID, idFound := jsonData["id"]
-		if !idFound {
-			http.Error(w, "Issue ID required", http.StatusBadRequest)
-			return
-		}
-		idInt, parseError := strconv.Atoi(issueID)
-		if parseError != nil {
-			http.Error(w, fmt.Sprintf("Cannot parse id: %v", issueID), http.StatusBadRequest)
+		issueForm := IssueForm{}
+		unmarshalErr := json.Unmarshal(body, &issueForm)
+		if unmarshalErr != nil {
+			http.Error(w, "Cannot Unmarshal Request", http.StatusBadRequest)
 			return
 		}
 
 		// update issues, throw any error if returned
-		updateErr := ctx.ReservationStore.UpdateIssue(idInt, typeParam, user.Name)
+		updateErr := ctx.ReservationStore.UpdateIssue(issueForm.ID, issueForm.Type, user.Name)
 		if updateErr != nil {
 			http.Error(w, fmt.Sprintf("Cannot update issue: %v", updateErr), http.StatusBadRequest)
 			return
@@ -836,14 +820,14 @@ func (ctx *HandlerContext) IssueHandler(w http.ResponseWriter, r *http.Request) 
 
 		// write status ok if succeed
 		// write issue-update to rabbitmq
-		mqMessage := fmt.Sprintf(`{"type": "issue-update", "id": %d, "type": %v}`, idInt, typeParam)
+		mqMessage := fmt.Sprintf(`{"type": "issue-update", "id": %d, "type": %v}`, issueForm.ID, issueForm.Type)
 		ctx.PublishMessage(mqMessage)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Issue Updated"))
-
 	}
 }
 
+// checked
 func (ctx *HandlerContext) GetUsedTimeHandler(w http.ResponseWriter, r *http.Request) {
 	// get authenticated user
 	// if not exist, throw unauthroized
@@ -873,7 +857,7 @@ func (ctx *HandlerContext) GetUsedTimeHandler(w http.ResponseWriter, r *http.Req
 		http.Error(w, "Room Name Required Only one", http.StatusBadRequest)
 		return
 	}
-	roomName := roomNames[1]
+	roomName := roomNames[0]
 
 	years, yearsFound := params["year"]
 	if !yearsFound {
@@ -921,11 +905,14 @@ func (ctx *HandlerContext) GetUsedTimeHandler(w http.ResponseWriter, r *http.Req
 	// transform the search result into string
 	resStr := "["
 	for i := 0; i < len(result); i++ {
-		cur := (*result)[i]
+		cur := result[i]
 		if cur != 0 {
 			resStr += strconv.Itoa(i) + ", "
 		}
 	}
+
+	resStr = strings.TrimSuffix(resStr, ", ")
+
 	resStr = resStr + "]"
 
 	// add header, and write the result into response body

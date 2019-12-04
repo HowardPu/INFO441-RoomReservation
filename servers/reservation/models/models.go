@@ -21,10 +21,12 @@ type Room struct {
 }
 
 type Issue struct {
-	ID         int    `json:"id"`
-	RoomName   string `json:"roomName"`
-	CreateDate string `json:"createdate"`
-	Body       string `json:"body"`
+	ID          int    `json:"id"`
+	RoomName    string `json:"roomName"`
+	CreateDate  string `json:"createDate"`
+	ConfirmDate string `json:"confirmDate"`
+	SolveDate   string `json:"solveDate"`
+	Body        string `json:"body"`
 }
 
 type Equipment struct {
