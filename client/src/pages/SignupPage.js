@@ -3,7 +3,7 @@ import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import {Redirect, Link} from 'react-router-dom';
 
-const host = "http://localhost"
+const host = "https://api.html-summary.me/"
 const signupURL = host + "/v1/users"
 const jsonHeader =  {'Content-Type': 'application/json'}
 

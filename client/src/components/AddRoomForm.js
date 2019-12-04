@@ -70,7 +70,6 @@ class AddRoomForm extends React.Component {
             }, 
             body: JSON.stringify(userInput)
         }).then(() => {
-            
             this.props.setResearch()
         }).catch(err => {
             var errMes = err.message

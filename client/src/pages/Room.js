@@ -82,7 +82,7 @@ export class Room extends Component {
                 <div>
                     <h1>Room Manager</h1>
                     <AuthButton signOutHandler={this.props.signOutHandler} />
-                    <button className="btn btn-primary mr-2" disabled={this.state.disabled} onClick={() => {
+                    <button className="btn btn-primary mr-2" onClick={() => {
                         this.setState({
                             back: true
                         })

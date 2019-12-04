@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Switch, Route, Redirect} from 'react-router-do
 import User from './pages/UserBoard'
 import Admin from './pages/AdminBoard'
 import Signin from './pages/SigninPage'
-import Reserve from './pages/ReserveRoom'
+import Reserve from './pages/RoomDetailPage'
 import Signup from './pages/SignupPage'
 import {Room} from './pages/Room'
 import {SpecificRoom} from './pages/SpecificRoom'
@@ -102,6 +102,7 @@ class App extends React.Component {
             this.setState({
               authToken: resp.headers.get("Authorization")
             })
+            localStorage.setItem('auth', resp.headers.get('Authorization'));
             return resp.json();
         } else {
             throw new Error(resp.status)
@@ -119,14 +120,6 @@ class App extends React.Component {
         })
     })
   }
-
-  // connect() {
-  //   if (localStorage.getItem('auth')) {
-  //     const websocket = new WebSocket("wss://" + "api.awesome-summary.me" + "/v1/ws?auth=" + localStorage.getItem('auth'));
-
-  //   }
-
-  // }
 
 
   render() {

@@ -5,11 +5,11 @@ import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
 import {Redirect} from 'react-router-dom';
 
-const host = "http://localhost"
+const host = "https://api.html-summary.me"
 const jsonHeader =  {
     'Authorization': localStorage.getItem('auth')
 }
-const getRoomURL = host + "v1/room"
+const getRoomURL = host + "/v1/room"
 
 const TestData = [{
     roomName: "Test",
@@ -28,41 +28,33 @@ class RoomList extends React.Component {
         super(props);
         this.state = {
             errMes: '',
-            data: TestData,
+            data: [],
             showRooms: false,
             name: '',
             floor: '',
             capacity: '',
             type: '',
             clickReserve: false,
-            reserveRoom: null,
+            reserveRoom: {},
         }
     }
 
     onSubmit(e){
         e.preventDefault();
-        this.setState({
-            showRooms: true
-        })
-        let userInput = {
-            roomName: this.state.name,
-            floor: this.state.floor,
-            capacity: this.state.capacity,
-            roomType: this.state.type
+        let roomName = this.state.name ? this.state.name : "*"
+        let roomType = this.state.type ? this.state.type : "*"
+        var url = `${getRoomURL}?roomname=${roomName}&roomtype=${roomType}`
+        if (this.state.floor) {
+            url = url + "&floor=" + this.status.floor
         }
-        // var data = this.getData(getRoomURL, userInput, jsonHeader);
-        // this.setState({data: data});
+
+        if (this.state.capacity) {
+            url = url + "&floor=" + this.status.capacity
+        }
+        console.log(url)
+        this.getData(url, jsonHeader);
     }
 
-    componentWillUnmount() {
-        this.setState(
-            {
-                notification: '',
-                errMes: '',
-                reserveRoom: null
-            }
-        )
-    }
 
     onChange(e) {
         this.setState(
@@ -123,12 +115,11 @@ class RoomList extends React.Component {
         })
     }
 
-    getData(url, userInput, headerInput) {
+    getData(url, headerInput) {
         fetch(url, {
             method: 'GET',
             mode: "cors",
             headers: headerInput, 
-            body: JSON.stringify(userInput)
         }).then(resp => {
             if (resp.ok) {
                 return resp.json();
@@ -136,8 +127,8 @@ class RoomList extends React.Component {
                 throw new Error(resp.status)
             }
         }).then(data => {
-            console.log(data);
-            return data;
+            this.setState({data:data});
+            this.setState({ showRooms: true})
         }).catch(err => {
             var errMes = "Oops something might be wrong! We will fix it soon!"
             console.log(err)
@@ -150,7 +141,15 @@ class RoomList extends React.Component {
     render() {
         if (this.state.clickReserve && this.state.reserveRoom !== null) {
             console.log(this.state.reserveRoom)
-            return (<Redirect to={{pathname:'/reserve', state:this.state.reserveRoom}} />)
+            var passState = {
+                roomInfo: this.state.reserveRoom
+            };
+
+            if (this.props.newRes && 
+                this.props.newRes.roomName === this.state.reserveRoom.roomName) {
+                passState.newRes = this.props.newRes
+            }
+            return (<Redirect to={{pathname:'/reserve', state:passState}} />)
         }
         return (
             <section>
@@ -200,7 +199,7 @@ class RoomList extends React.Component {
                     </Button>
                 </Form>
                 <br />
-                {this.state.showRooms && this.state.data && 
+                {this.state.showRooms === true && this.state.data && 
                     <Table variant="dark">
                         <thead>
                             <tr>
