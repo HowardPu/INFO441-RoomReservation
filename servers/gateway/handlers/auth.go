@@ -97,7 +97,6 @@ func (ctx *HandlerContext) SessionsHandler(w http.ResponseWriter, r *http.Reques
 
 	// if something wrong when decode, throw bad request
 	if decodeErr != nil {
-		fmt.Printf("%v ", decodeErr)
 		http.Error(w, "Cannot decode credential", http.StatusBadRequest)
 		return
 	}
@@ -171,7 +170,7 @@ func (ctx *HandlerContext) SpecificSessionHandler(w http.ResponseWriter, r *http
 	defer locker.Unlock()
 	_, sessionErr := S.EndSession(r, ctx.SessionKey, ctx.SessionStore)
 	if sessionErr == nil {
-		ctx.SocketStore.RemoveConnection(GetAuthToken(r))
+		//ctx.SocketStore.RemoveConnection(GetAuthToken(r))
 	}
 	w.Write([]byte("signed out"))
 }
