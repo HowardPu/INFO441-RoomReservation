@@ -3,7 +3,6 @@ package handlers
 import (
 	"INFO441-RoomReservation/servers/gateway/sessions"
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"sync"
@@ -33,12 +32,10 @@ func (ctx *HandlerContext) NewServiceProxy(addr string) *httputil.ReverseProxy {
 			userStore := &UserLite{}
 			_, err := sessions.GetState(r, ctx.SessionKey, ctx.SessionStore, userStore)
 			if err != nil {
-				log.Printf("%v /n", err)
 				return
 			}
 			userJSON, err := json.Marshal(userStore)
 			if err != nil {
-				log.Printf("%v /n", err)
 				return
 			}
 

@@ -11,6 +11,9 @@ var rabbitAddr = "amqp://guest:guest@rabbit:5672/"
 var queueName = "reservationQueue"
 var durable = true
 
+// NOTE: this file is a simple modification from
+// https://github.com/gorilla/websocket/tree/master/examples/chat
+
 // Hub represents a center manage of all websocket connections
 type Hub struct {
 	// Registered clients.

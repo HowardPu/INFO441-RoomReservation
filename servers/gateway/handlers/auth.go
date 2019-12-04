@@ -97,7 +97,6 @@ func (ctx *HandlerContext) SessionsHandler(w http.ResponseWriter, r *http.Reques
 
 	// if something wrong when decode, throw bad request
 	if decodeErr != nil {
-		fmt.Printf("%v ", decodeErr)
 		http.Error(w, "Cannot decode credential", http.StatusBadRequest)
 		return
 	}

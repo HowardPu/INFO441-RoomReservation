@@ -2,12 +2,15 @@ package handlers
 
 import (
 	"INFO441-RoomReservation/servers/gateway/sessions"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
+
+// NOTE: this file is a simple modification from
+// https://github.com/gorilla/websocket/tree/master/examples/chat
+// in order to serbe better purpose for our project
 
 const (
 	// TextMessage denotes a text data message. The text message payload is
@@ -63,7 +66,6 @@ func (ctx *HandlerContext) ServeWs(hub *Hub, w http.ResponseWriter, r *http.Requ
 	userStore := UserLite{}
 	_, err := sessions.GetState(r, ctx.SessionKey, ctx.SessionStore, &userStore)
 	if err != nil || userStore.ID <= 0 {
-		log.Println("User doesn't Sign in")
 		http.Error(w, "User doesn't Sign in", http.StatusUnauthorized)
 		return
 	}
@@ -72,7 +74,6 @@ func (ctx *HandlerContext) ServeWs(hub *Hub, w http.ResponseWriter, r *http.Requ
 	// if DNE, throw authorized
 	authTokenQuery := r.URL.Query()["auth"]
 	if len(authTokenQuery) == 0 {
-		log.Println("No auth query")
 		http.Error(w, "No Auth Query", http.StatusUnauthorized)
 		return
 	}
@@ -86,7 +87,6 @@ func (ctx *HandlerContext) ServeWs(hub *Hub, w http.ResponseWriter, r *http.Requ
 	// and pass it to the hub
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("Conn Err: %v\n", err)
 		return
 	}
 

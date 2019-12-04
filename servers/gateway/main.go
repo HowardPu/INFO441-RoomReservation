@@ -45,11 +45,9 @@ var ctx = H.HandlerContext{
 	SessionKey:   signingKey,
 	UserStore:    msstore,
 	SessionStore: redisStore,
-	SocketStore:  H.NewSocketStore(),
 }
 
 func main() {
-	log.Println(dbERR)
 	addr := os.Getenv("ADDR")
 	reserveAddr := os.Getenv("RESERVE")
 
