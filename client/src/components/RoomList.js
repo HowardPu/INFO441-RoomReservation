@@ -5,7 +5,7 @@ import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
 import {Redirect} from 'react-router-dom';
 
-const host = "http://localhost"
+const host = "http://api.html-summary.me"
 const jsonHeader =  {
     'Authorization': localStorage.getItem('auth')
 }
@@ -41,11 +41,8 @@ class RoomList extends React.Component {
 
     onSubmit(e){
         e.preventDefault();
-        this.setState({
-            showRooms: true
-        })
         let roomName = this.state.name ? this.state.name : "*"
-        let roomType = this.state.type ? this.state.roomType : "*"
+        let roomType = this.state.type ? this.state.type : "*"
         var url = `${getRoomURL}?roomname=${roomName}&roomtype=${roomType}`
         if (this.state.floor) {
             url = url + "&floor=" + this.status.floor
@@ -55,19 +52,9 @@ class RoomList extends React.Component {
             url = url + "&floor=" + this.status.capacity
         }
         console.log(url)
-        var data = this.getData(url, jsonHeader);
-        this.setState({data: data});
+        this.getData(url, jsonHeader);
     }
 
-    componentWillUnmount() {
-        this.setState(
-            {
-                notification: '',
-                errMes: '',
-                reserveRoom: null
-            }
-        )
-    }
 
     onChange(e) {
         this.setState(
@@ -140,8 +127,8 @@ class RoomList extends React.Component {
                 throw new Error(resp.status)
             }
         }).then(data => {
-            console.log(data);
-            return data;
+            this.setState({data:data});
+            this.setState({ showRooms: true})
         }).catch(err => {
             var errMes = "Oops something might be wrong! We will fix it soon!"
             console.log(err)
@@ -212,7 +199,7 @@ class RoomList extends React.Component {
                     </Button>
                 </Form>
                 <br />
-                {this.state.showRooms && this.state.data && 
+                {this.state.showRooms === true && this.state.data && 
                     <Table variant="dark">
                         <thead>
                             <tr>

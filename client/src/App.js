@@ -12,25 +12,22 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-        isloggedin: false
+        adminLogin: false,
+        userLogin: false,
     }
-
-}
-
-  componentDidMount() {
-    
   }
 
-  // connect() {
-  //   if (localStorage.getItem('auth')) {
-  //     const websocket = new WebSocket("wss://" + "api.awesome-summary.me" + "/v1/ws?auth=" + localStorage.getItem('auth'));
-
-  //   }
-
-  // }
+  updateAuthInfo(adminLogin, userLogin) {
+    console.log(adminLogin)
+    this.setState({
+      adminLogin,
+      userLogin
+    })
+  }
 
 
   render() {
+    console.log(this.state)
     return (
       <div className="App">
         <header className="App-header"></header>
@@ -38,11 +35,12 @@ class App extends React.Component {
         <Router>
           <div>
             <Switch>
-              <Route exact path='/signin' component={Signin} />
-              <Route exact path='/signup' component={Signup} />
-              <Route exact path='/admin' component={Admin} />
-              <Route exact path='/user' component={User} />
-              <Route exact path='/reserve' component={Reserve} />
+                <Route exact path='/signin' component={Signin} />
+                <Route exact path='/signup' component={Signup} />
+                <Route exact path='/admin' component={Admin} />
+                <Route exact path='/user' component={User} />
+                <Route exact path='/reserve' component={Reserve} />
+              }
               <Redirect to="/signin" />
             </Switch>
           </div>

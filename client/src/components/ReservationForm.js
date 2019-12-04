@@ -5,14 +5,14 @@ import Alert from 'react-bootstrap/Alert'
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 
-const host = ""
+const host = "http://api.html-summary.me/"
 const jsonHeader =  {
     'Content-Type': 'application/json',
     'Authorization': localStorage.getItem('auth')
 }
 const latest = 42
 const reserveURL = host + "v1/reserve"
-const getUsedTimeURL = host + "v1/roomUsedTime"
+const getUsedTimeURL = host + "v1/roomusedtime"
 
 class ReservationForm extends React.Component {
     constructor(props) {
@@ -81,8 +81,8 @@ class ReservationForm extends React.Component {
                 "month=" + this.state.startedDate.getMonth() + "&" +
                 "day=" + this.state.startedDate.getDay();
             console.log(getURL);
-            var timeslots = [23, 30]
-            // var timeslots = this.getData(getURL, jsonHeader);
+            var timeslots = this.getData(getURL, jsonHeader);
+
             var excludeTimes = [];
             let newSlot = this.props.newRes;
             if (this.props.newRes) {
@@ -150,9 +150,9 @@ class ReservationForm extends React.Component {
             console.log(data);
             return data;
         }).catch(err => {
-            var errMes = "Oops something might be wrong! We will fix it soon!"
+            // var errMes = "Oops something might be wrong! We will fix it soon!"
             console.log(err)
-            this.setState({errMes});
+            // this.setState({errMes});
             return null;
         })
     }
@@ -185,7 +185,7 @@ class ReservationForm extends React.Component {
 
             this.setState({requestInfo: request})
             console.log(request)
-            // this.postData(reserveURL, request, jsonHeader)
+            this.postData(reserveURL, request, jsonHeader)
         }
     }
 
@@ -197,9 +197,6 @@ class ReservationForm extends React.Component {
             body: JSON.stringify(userInput)
         }).then(resp => {
             if (resp.ok) {
-                if (!headerInput.Authorization && resp.headers.get('Authorization')) {
-                    localStorage.setItem('auth', resp.headers.get('Authorization'));
-                }
                 return resp.json();
             } else {
                 throw new Error(resp.status)

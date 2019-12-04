@@ -17,9 +17,6 @@ class Admin extends React.Component {
                 <AddRoomForm />
                 <hr />
                 <DeleteRoomForm />
-
-
-                /
           </div>
       );
     }

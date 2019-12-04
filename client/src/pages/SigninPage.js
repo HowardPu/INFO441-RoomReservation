@@ -2,8 +2,9 @@ import React from 'react';
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import {Redirect, Link} from 'react-router-dom';
+import Admin from './AdminBoard'
 
-const host = "http://localhost" //!!change it later
+const host = "http://api.html-summary.me" //!!change it later
 const signinURL = host + "/v1/sessions"
 const jsonHeader =  {'Content-Type': 'application/json'}
 
@@ -52,9 +53,7 @@ class Signin extends React.Component {
             body: JSON.stringify(userInput)
         }).then(resp => {
             if (resp.ok) {
-                if (!headerInput.Authorization && resp.headers.get('Authorization')) {
-                    localStorage.setItem('auth', resp.headers.get('Authorization'));
-                }
+                localStorage.setItem('auth', resp.headers.get('Authorization'));
                 return resp.json();
             } else {
                 throw new Error(resp.status)
@@ -75,12 +74,12 @@ class Signin extends React.Component {
 
     render() {
         if (this.state.adminSignedIn === true) {
-            return (<Redirect to="/admin" />)
+            return (<Redirect to="/admin" component={Admin}/>)
         } else if (this.state.normalSignedIn === true) {
             return (<Redirect to="/user" />)
         }
         return (
-            <div>
+            <div className="formContainer">
                 <h1>Sign In</h1>
                 <br />
                 <Form>

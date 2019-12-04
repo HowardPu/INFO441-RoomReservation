@@ -2,8 +2,8 @@ import React from 'react';
 import RoomList from '../components/RoomList';
 import ReservationList from '../components/ReservationList';
 
-const host = "";
-const client = new WebSocket("wss://" + host + "/v1/ws?auth=" + localStorage.getItem('auth'));
+const host = "api.html-summary.me/";
+const client = new WebSocket("ws://" + host + "v1/ws?auth=" + localStorage.getItem('auth'));
 
 class User extends React.Component {
     constructor(props) {
@@ -13,16 +13,16 @@ class User extends React.Component {
         }
     }
 
-    componentWillMount() {
+    componentDidMount() {
         client.onopen = () => {
           console.log('WebSocket Client Connected');
         };
 
         client.onmessage = (message) => {
             console.log(message);
-            let messageObj = message.json();
-            if (messageObj.type === "reservation-create") {
-                this.setState({newRes: messageObj})
+            // let messageObj = message.json();
+            if (message.data.type === "reservation-create") {
+                this.setState({newRes: message.data})
             }
             
         };
