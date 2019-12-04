@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"bytes"
-	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -27,24 +25,27 @@ type Client struct {
 // The application runs readPump in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
-func (c *Client) readPump() {
+func (c *Client) readPump(endLoop chan bool) {
+	// if read pump ends
+	// close the connedtion
+	// remove the connection from the hub
+	// and end the handshake
 	defer func() {
 		c.hub.unregister <- c
 		c.conn.Close()
+		endLoop <- true
 	}()
 	c.conn.SetReadLimit(maxMessageSize)
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	// read message from the client
+	// if the client sent close message
+	// end the read pump
 	for {
-		_, message, err := c.conn.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
-			}
-			break
+		messageType, _, err := c.conn.ReadMessage()
+		if err != nil || messageType == CloseMessage {
+			return
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.hub.broadcast <- message
 	}
 }
 
@@ -55,7 +56,10 @@ func (c *Client) readPump() {
 // executing all writes from this goroutine.
 func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
+	// when the pump stoped
+	// end the connection
 	defer func() {
+		c.hub.unregister <- c
 		ticker.Stop()
 		c.conn.Close()
 	}()
@@ -85,6 +89,8 @@ func (c *Client) writePump() {
 			if err := w.Close(); err != nil {
 				return
 			}
+		// ping the handshake
+		// end the loop if error occurs
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {

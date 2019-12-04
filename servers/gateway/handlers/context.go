@@ -16,5 +16,4 @@ type HandlerContext struct {
 	SessionKey   string
 	SessionStore *S.RedisStore
 	UserStore    *U.MsSqlStore
-	SocketStore  *SocketStore
 }

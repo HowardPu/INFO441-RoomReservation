@@ -108,7 +108,8 @@ class App extends React.Component {
         headers: {'Authorization': this.state.authToken}
     }).then(() => {
       let conn = this.state.connection
-      conn.close()
+      conn.onclose = () => {}
+      conn.close(1000, "Closing Connection Normally")
       this.setState({
         authToken: "",
         userType: "",

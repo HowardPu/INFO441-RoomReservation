@@ -171,7 +171,7 @@ func (ctx *HandlerContext) SpecificSessionHandler(w http.ResponseWriter, r *http
 	defer locker.Unlock()
 	_, sessionErr := S.EndSession(r, ctx.SessionKey, ctx.SessionStore)
 	if sessionErr == nil {
-		ctx.SocketStore.RemoveConnection(GetAuthToken(r))
+		//ctx.SocketStore.RemoveConnection(GetAuthToken(r))
 	}
 	w.Write([]byte("signed out"))
 }
