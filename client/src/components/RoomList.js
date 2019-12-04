@@ -24,31 +24,40 @@ class RoomList extends React.Component {
             type: '',
             clickReserve: false,
             reserveRoom: {},
+            authFail: false
         }
     }
 
-    componentWillReceiveProps() {
-        // console.log(this.props.wsMes)
-        // if (this.props.wsMes) {
-        //     this.searchData();
-        // }
-        const ws = this.props.ws;
-        ws.onopen = () => {
-            console.log('WebSocket Client Connected');
-        };
 
-        ws.onmessage = (message) => {
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if (this.props.message != prevProps.message) {
             this.searchData();
-        };
-
-        ws.onerror = (err) => {
-            console.log(err);
-        };
-
-        ws.onclose = (event) => {
-            console.log("WebsocketStatus: Closed")
-        };
+        }
     }
+
+
+    // componentWillReceiveProps() {
+    //     // console.log(this.props.wsMes)
+    //     if (this.props.wsMes) {
+    //         this.searchData();
+    //     }
+    //     // const ws = this.props.ws;
+    //     // ws.onopen = () => {
+    //     //     console.log('WebSocket Client Connected');
+    //     // };
+
+    //     // ws.onmessage = (message) => {
+    //     //     this.searchData();
+    //     // };
+
+    //     // ws.onerror = (err) => {
+    //     //     console.log(err);
+    //     // };
+
+    //     // ws.onclose = (event) => {
+    //     //     console.log("WebsocketStatus: Closed")
+    //     // };
+    // }
 
     onSubmit(e){
         e.preventDefault();
@@ -138,6 +147,8 @@ class RoomList extends React.Component {
         }).then(resp => {
             if (resp.ok) {
                 return resp.json();
+            } else if (resp.status === 400) {
+                this.setState({authFail: true})
             } else {
                 throw new Error(resp.status)
             }
@@ -155,17 +166,24 @@ class RoomList extends React.Component {
 
     render() {
         if (this.state.clickReserve && this.state.reserveRoom !== null) {
-            console.log(this.state.reserveRoom)
+            console.log(this.props.message)
             var passState = {
                 roomInfo: this.state.reserveRoom
             };
 
-            if (this.props.newRes && 
-                this.props.newRes.roomName === this.state.reserveRoom.roomName) {
-                passState.newRes = this.props.newRes
+            if (this.props.message.type === "reservation-create" || this.props.message.type === "reservation-deleted") {
+                if (this.props.message && 
+                    this.props.message.roomName === this.state.reserveRoom.roomName) {
+                    passState.newRes = this.props.message
+                }
             }
             return (<Redirect to={{pathname:'/reserve', state:passState}} />)
         }
+         
+        if (this.state.authFail == true) {
+            return (<Redirect to='/signin' />)
+        }
+
         return (
             <section>
                 {this.state.errMes && <div className="errMes">{this.state.errMes}</div>}

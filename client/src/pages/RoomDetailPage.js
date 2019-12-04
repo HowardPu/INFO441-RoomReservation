@@ -2,10 +2,9 @@ import React from 'react';
 import ReservationForm from '../components/ReservationForm';
 import { Link } from 'react-router-dom';
 
-const host = "https://api.html-summary.me/" //!!change it later
-const reserveURL = host + "/v1/reserve"
+const host = "https://api.html-summary.me"
+const getEquipURL = host + "/v1/specificRoom"
 const jsonHeader =  {
-    'Content-Type': 'application/json',
     'Authorization': localStorage.getItem('auth')
 }
 
@@ -15,8 +14,58 @@ class RoomDetailPage extends React.Component {
         super(props);
         console.log(this.props.location.state)
         this.state = {
-            data: {}
+            data: {},
+            equip: null
         }
+    }
+
+    // componentDidUpdate(prevProps, prevState, snapshot) {
+    //     if (this.props.location.state.newRes != prevState.location.state.newRes) {
+
+    //     }
+    // }
+
+
+    componentDidMount() {
+        console.log(this.props.location.state.newRes)
+        let url = getEquipURL + '?roomname=' + this.props.location.state.roomInfo.roomName;
+        this.getData(url, jsonHeader);    
+    }
+
+    renderEquip() {
+        var equips = []
+        this.state.equip.map((item, i) => {
+            equips.push(
+                <li key={i}>{item.Name}</li>
+            )
+        })
+        return (
+            <ul>
+                {equips}
+            </ul>
+        )
+    }
+
+    getData(url, headerInput) {
+        fetch(url, {
+            method: 'GET',
+            mode: "cors",
+            headers: headerInput, 
+        }).then(resp => {
+            if (resp.ok) {
+                return resp.json();
+            } else {
+                throw new Error(resp.status)
+            }
+        }).then(data => {
+            console.log(data)
+            this.setState({equip:data});
+        }).catch(err => {
+            var errMes = "Oops something might be wrong! We will fix it soon!"
+            console.log(err)
+            this.setState({errMes});
+            return null;
+        })
     }
 
     render() {
@@ -52,9 +101,11 @@ class RoomDetailPage extends React.Component {
                 </div>
                 <br />
                 <h3>Equipments</h3>
-                    
+                {this.state.equip && this.state.equip.length !== 0 ? this.renderEquip() : <div>No Equipments Info</div>}
+                <br />
                 <h2>Reserve the Room</h2>
                 <ReservationForm newRes={this.props.location.state.newRes} roomName={this.props.location.state.roomInfo.roomName}></ReservationForm>
+                <br />
                 <Link to="/user">Back to User Board</Link>
             </div>
         );

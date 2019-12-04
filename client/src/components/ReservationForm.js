@@ -13,8 +13,13 @@ const jsonHeader =  {
 const latest = 42
 const reserveURL = host + "v1/reserve"
 const getUsedTimeURL = host + "v1/roomUsedTime"
+const availableTime = [];
+for (var i = 16; i <= 42; i++) {
+    availableTime.push(i);
+}
 
 class ReservationForm extends React.Component {
+
     constructor(props) {
         super(props);
         this.state = {
@@ -23,13 +28,14 @@ class ReservationForm extends React.Component {
             startedTime: null,
             duration: 0.5,
             showSuccessMes: false,
-            requestInfo: {},
+            requestInfo: {}
+            // excludeTimes: []
         }
     }
 
-    componentDidUpdate(){
-        this.renderTimePicker();
-    }
+    // componentDidUpdate(){
+    //     this.renderTimePicker();
+    // }
 
     setStartDate(date) {
         this.setState({startedDate: date})
@@ -47,6 +53,18 @@ class ReservationForm extends React.Component {
         );
     }
 
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        console.log(this.props.newRes)
+        if (this.props.newRes !== prevProps.newRes) {
+            return true;
+        }
+        // if (this.props.newRes !== prevProps.newRes) {
+        //     // this.renderTimePicker();
+        //     this.manipulateTimeData()
+        // }
+    }
+
+
     setStartTime(time) {
         if (!this.state.startedDate) {
             this.setState({errMes: "Please Input the date first "})
@@ -54,13 +72,12 @@ class ReservationForm extends React.Component {
             this.setState({startedTime: time})
         }
     }
+    
 
     renderTimePicker() {
-        var availableTime = [];
-        for (var i = 16; i <= 42; i++) {
-            availableTime.push(i);
-        }
+        console.log("render!")
         let curDate = new Date()
+        var excludeTimes = []
         if (this.state.startedDate){
             var minTime = new Date()
             minTime.setHours(8);
@@ -74,43 +91,7 @@ class ReservationForm extends React.Component {
             var maxTime = new Date()
             maxTime.setHours(20);
             maxTime.setMinutes(30);
-            console.log(this.props.roomName);
-            let month =  this.state.startedDate.getMonth() + 1
-            var getURL = getUsedTimeURL + 
-                "?roomname=" + this.props.roomName + "&" +
-                "year=" + this.state.startedDate.getFullYear() + "&" +
-                "month=" + month + "&" +
-                "day=" + this.state.startedDate.getDate();
-
-            var timeslots;
-            var excludeTimes = [];
-            this.getData(getURL).then(data => {
-                timeslots = data.result;
-                let newSlot = this.props.newRes;
-                if (this.props.newRes) {
-                    for (let t = newSlot.begin; t <= newSlot.begin + newSlot.duration; t++) {
-                        timeslots.add(t);
-                    }
-                }
-                
-                if (timeslots) {
-                    timeslots.forEach(receivedTime => {
-                        var time = receivedTime - 1;
-                        availableTime.splice(availableTime.indexOf(time), 1);
-                        for (let j = time; j > time - this.state.duration*2; j--) {
-                            let exclude = this.dateGenerate(j)
-                            excludeTimes.push(exclude);
-                        }
-                    }); 
-                }
-            
-                for (let l = latest; l >= latest - this.state.duration*2; l--) {
-                    let exclude = this.dateGenerate(l)
-                    excludeTimes.push(exclude);
-                }
-            }).catch(err => {
-                console.log(err)
-            })            
+            excludeTimes = this.manipulateTimeData();
         }
 
         return (
@@ -126,6 +107,49 @@ class ReservationForm extends React.Component {
                 dateFormat="h:mm aa"
             />
         );
+    }
+
+    manipulateTimeData() {
+        let month =  this.state.startedDate.getMonth() + 1
+        var getURL = getUsedTimeURL + 
+            "?roomname=" + this.props.roomName + "&" +
+            "year=" + this.state.startedDate.getFullYear() + "&" +
+            "month=" + month + "&" +
+            "day=" + this.state.startedDate.getDate();
+        var timeslots;
+        var excludeTimes = [];
+        let newSlot = this.props.newRes;
+        console.log(newSlot)
+        this.getData(getURL).then(data => {
+            console.log(data)
+            timeslots = data.result;
+            if (newSlot) {
+                for (let t = newSlot.begin; t <= newSlot.begin + newSlot.duration; t++) {
+                    timeslots.add(t);
+                }
+            }
+            
+            if (timeslots) {
+                timeslots.forEach(receivedTime => {
+                    var time = receivedTime - 1;
+                    availableTime.splice(availableTime.indexOf(time), 1);
+                    for (let j = time; j > time - this.state.duration*2; j--) {
+                        let exclude = this.dateGenerate(j)
+                        excludeTimes.push(exclude);
+                    }
+                }); 
+            }
+        
+            for (let l = latest; l >= latest - this.state.duration*2; l--) {
+                let exclude = this.dateGenerate(l)
+                excludeTimes.push(exclude);
+            }
+            return excludeTimes;
+            // this.setState({excludeTimes})
+        }).catch(err => {
+            console.log(err)
+        })            
+        return excludeTimes
     }
 
     dateGenerate(time) {
@@ -216,7 +240,6 @@ class ReservationForm extends React.Component {
         let startMin = this.state.startedTime.getMinutes() === 0 ? "00" : this.state.startedTime.getMinutes();
         let dateString = `${this.state.requestInfo.month}/${this.state.requestInfo.day}/${this.state.requestInfo.year}`;
         let timeString = `${startHour}:${startMin} to ${endHour}:${endMin}`;
-        console.log(endDate)
         return (
             <Alert variant="success" onClose={(e) => this.onCloseMes(e)} dismissible>
                 <Alert.Heading>Successfully Reservered!</Alert.Heading>

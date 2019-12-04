@@ -7,38 +7,41 @@ const host = "api.html-summary.me/";
 class User extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            client: new WebSocket("wss://" + host + "v1/ws?auth=" + localStorage.getItem('auth'))
+        this.state={
+            message: ''
         }
     }
 
-    // componentDidMount() {
-    //     const client = new WebSocket("wss://" + host + "v1/ws?auth=" + localStorage.getItem('auth'));
-    //     client.onopen = () => {
-    //       console.log('WebSocket Client Connected');
-    //     };
+    componentDidMount() {
+        const client = new WebSocket("wss://" + host + "v1/ws?auth=" + localStorage.getItem('auth'));
+        client.onopen = () => {
+          console.log('WebSocket Client Connected');
+        };
 
-    //     client.onmessage = (message) => {
-    //     };
+        client.onmessage = (message) => {
+            console.log(message)
+            this.setState({message: message})
+        };
 
-    //     client.onerror = (err) => {
-    //         console.log(err);
-    //     };
+        client.onerror = (err) => {
+            console.log(err);
+        };
 
-    //     client.onclose = (event) => {
-    //         console.log("WebsocketStatus: Closed")
-    //     };
-    // }
+        client.onclose = (event) => {
+            console.log("WebsocketStatus: Closed ")
+            console.log(event)
+        };
+    }
     
     render() {
         return (
             <div>
                 <h1>User Board</h1>
                 <h2>View Your Reservations</h2>
-                <ReservationList ws={this.state.client}/>
+                <ReservationList message={this.state.message}/>
                 <br />
                 <h2>Search Rooms</h2>
-                <RoomList ws={this.state.client}/>                
+                <RoomList message={this.state.message}/>                
             </div>
         );
     }

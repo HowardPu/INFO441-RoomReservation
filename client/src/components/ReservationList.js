@@ -20,25 +20,12 @@ class ReservationList extends React.Component {
         }
     }
 
-    componentDidMount() {
-        const ws = this.props.ws;
-        ws.onopen = () => {
-            console.log('WebSocket Client Connected');
-        };
-
-        ws.onmessage = (message) => {
-            console.log(message)
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if (this.props.message != prevProps.message) {
             this.getData(resURL, jsonHeader)
-        };
-
-        ws.onerror = (err) => {
-            console.log(err);
-        };
-
-        ws.onclose = (event) => {
-            console.log("WebsocketStatus: Closed")
-        };
+        }
     }
+
 
     onView(e) {
         e.preventDefault();
@@ -46,6 +33,7 @@ class ReservationList extends React.Component {
     }
 
     getData(url, headerInput) {
+        console.log("getData")
         fetch(url, {
             method: 'GET',
             mode: "cors",
@@ -57,6 +45,7 @@ class ReservationList extends React.Component {
                 throw new Error(resp.status)
             }
         }).then(data => {
+            console.log(data)
             this.setState({data})
             this.setState({showRes: true})
         }).catch(err => {
@@ -67,7 +56,6 @@ class ReservationList extends React.Component {
     }
 
     decoder(num) {
-        console.log(num)
         var hour;
         var min = "00";
         if (num%2 == 1) {
@@ -141,6 +129,7 @@ class ReservationList extends React.Component {
         }).then(resp => {
             if (resp.status == 200) {
                 console.log("reservation canceled")
+                this.getData(resURL, jsonHeader)
                 return;
             } else {
                 throw Error(resp.status)
