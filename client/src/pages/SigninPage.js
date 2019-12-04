@@ -1,8 +1,5 @@
 import React from 'react';
-import Form from 'react-bootstrap/Form'
-import Button from 'react-bootstrap/Button'
 import {Redirect, Link} from 'react-router-dom';
-import Admin from './AdminBoard'
 
 
 class Signin extends React.Component {
@@ -119,7 +116,7 @@ class Signin extends React.Component {
                     </div>
 
                     <div className="log-in-item"> 
-                        <Link to="/signup">No account? Start your journey today!</Link>
+                        <Link to="/signup">Don't have an account? Start your journey today!</Link>
                     </div> 
                 </div>
             </div>

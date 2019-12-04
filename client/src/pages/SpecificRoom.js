@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {Redirect, Link} from 'react-router-dom';
+import {Redirect} from 'react-router-dom';
 import {AuthButton} from '../components/AuthButton'
 
 // This is the authentication button
@@ -15,7 +15,7 @@ export class SpecificRoom extends Component {
 
     render() {
         let userType = this.props.appState.userType
-        if(userType != "Admin") {
+        if(userType !== "Admin") {
             return <Redirect to='/signin'/>
         }
         if(this.state.back) {

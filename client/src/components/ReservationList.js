@@ -9,26 +9,7 @@ const host = "https://api.html-summary.me"
 const jsonHeader =  {
     'Authorization': localStorage.getItem('auth')
 }
-const resURL = host + "/v1/reserve"
-
-const TestData = [{
-    id: 3,
-    tranDate:    "2019-11-13",
-    reserveDate: "2019-11-13",
-    roomName:    "MGH201",
-    beginTime:   17,
-    endTime:     20,
-    roomType:    "Study",
-},
-{
-    id:2,
-    tranDate:    "2019-11-13",
-    reserveDate: "2019-11-13",
-    roomName:    "MGH201",
-    beginTime:   17,
-    endTime:     20,
-    roomType:    "Study",
-}]
+const resURL = host + "/v1/reserve" 
 
 class ReservationList extends React.Component {
     constructor(props) {
@@ -39,20 +20,29 @@ class ReservationList extends React.Component {
         }
     }
 
-    // componentWillUnmount() {
-    //     this.setState(
-    //         {
-    //             showRes: false,
-    //             data: []
-    //         }
-    //     )
-    // }
+    componentDidMount() {
+        const ws = this.props.ws;
+        ws.onopen = () => {
+            console.log('WebSocket Client Connected');
+        };
+
+        ws.onmessage = (message) => {
+            console.log(message)
+            this.getData(resURL, jsonHeader)
+        };
+
+        ws.onerror = (err) => {
+            console.log(err);
+        };
+
+        ws.onclose = (event) => {
+            console.log("WebsocketStatus: Closed")
+        };
+    }
 
     onView(e) {
         e.preventDefault();
-        // this.setState({showRes: true})
-
-        var data = this.getData(resURL, jsonHeader)
+        this.getData(resURL, jsonHeader)
     }
 
     getData(url, headerInput) {
@@ -69,17 +59,15 @@ class ReservationList extends React.Component {
         }).then(data => {
             this.setState({data})
             this.setState({showRes: true})
-            console.log(data);
-            return data;
         }).catch(err => {
             var errMes = "Oops something might be wrong! We will fix it soon!"
             console.log(err)
             this.setState({errMes});
-            return null;
         })
     }
 
     decoder(num) {
+        console.log(num)
         var hour;
         var min = "00";
         if (num%2 == 1) {
@@ -91,9 +79,8 @@ class ReservationList extends React.Component {
         return hour + ":" + min
     }
 
-    renderData() {
-        console.log(this.state.data)
-        return this.state.data.map((item, i) => {
+    renderData(data) {
+        return data.map((item, i) => {
             let roomName = item.roomName;
             let reserveDate = item.reserveDate;
             let beginTime = this.decoder(item.beginTime);
@@ -141,15 +128,19 @@ class ReservationList extends React.Component {
 
     removeRes(e) {
         e.preventDefault()
-        let id = e.target.value
-        fetch(resURL+id, {
+        let id = parseInt(e.target.value)
+        console.log(resURL)
+        fetch(resURL, {
             method: 'DELETE',
             mode: "cors",
-            headers: jsonHeader
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': localStorage.getItem('auth')
+            },
+            body: JSON.stringify({id:id})
         }).then(resp => {
             if (resp.status == 200) {
                 console.log("reservation canceled")
-
                 return;
             } else {
                 throw Error(resp.status)
@@ -182,7 +173,7 @@ class ReservationList extends React.Component {
                             </tr>
                         </thead>
                         <tbody>
-                            {this.renderData()}
+                            {this.renderData(this.state.data)}
                         </tbody>
                     </Table>
                 }

@@ -11,18 +11,6 @@ const jsonHeader =  {
 }
 const getRoomURL = host + "/v1/room"
 
-const TestData = [{
-    roomName: "Test",
-    capacity: 3,
-    roomType:"study"
-},
-{
-    roomName: "Test",
-    capacity: 3,
-    floor:2,
-    roomType:"study"
-}]
-
 class RoomList extends React.Component {
     constructor(props) {
         super(props);
@@ -39,17 +27,44 @@ class RoomList extends React.Component {
         }
     }
 
+    componentWillReceiveProps() {
+        // console.log(this.props.wsMes)
+        // if (this.props.wsMes) {
+        //     this.searchData();
+        // }
+        const ws = this.props.ws;
+        ws.onopen = () => {
+            console.log('WebSocket Client Connected');
+        };
+
+        ws.onmessage = (message) => {
+            this.searchData();
+        };
+
+        ws.onerror = (err) => {
+            console.log(err);
+        };
+
+        ws.onclose = (event) => {
+            console.log("WebsocketStatus: Closed")
+        };
+    }
+
     onSubmit(e){
         e.preventDefault();
+        this.searchData();
+    }
+
+    searchData() {
         let roomName = this.state.name ? this.state.name : "*"
         let roomType = this.state.type ? this.state.type : "*"
         var url = `${getRoomURL}?roomname=${roomName}&roomtype=${roomType}`
         if (this.state.floor) {
-            url = url + "&floor=" + this.status.floor
+            url = url + "&floor=" + this.state.floor
         }
 
         if (this.state.capacity) {
-            url = url + "&floor=" + this.status.capacity
+            url = url + "&floor=" + this.state.capacity
         }
         console.log(url)
         this.getData(url, jsonHeader);

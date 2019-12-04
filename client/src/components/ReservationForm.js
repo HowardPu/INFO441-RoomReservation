@@ -12,7 +12,7 @@ const jsonHeader =  {
 }
 const latest = 42
 const reserveURL = host + "v1/reserve"
-const getUsedTimeURL = host + "v1/roomusedtime"
+const getUsedTimeURL = host + "v1/roomUsedTime"
 
 class ReservationForm extends React.Component {
     constructor(props) {
@@ -23,7 +23,7 @@ class ReservationForm extends React.Component {
             startedTime: null,
             duration: 0.5,
             showSuccessMes: false,
-            requestInfo: {}
+            requestInfo: {},
         }
     }
 
@@ -74,38 +74,43 @@ class ReservationForm extends React.Component {
             var maxTime = new Date()
             maxTime.setHours(20);
             maxTime.setMinutes(30);
-    
+            console.log(this.props.roomName);
+            let month =  this.state.startedDate.getMonth() + 1
             var getURL = getUsedTimeURL + 
                 "?roomname=" + this.props.roomName + "&" +
                 "year=" + this.state.startedDate.getFullYear() + "&" +
-                "month=" + this.state.startedDate.getMonth() + "&" +
-                "day=" + this.state.startedDate.getDay();
-            console.log(getURL);
-            var timeslots = this.getData(getURL, jsonHeader);
+                "month=" + month + "&" +
+                "day=" + this.state.startedDate.getDate();
 
+            var timeslots;
             var excludeTimes = [];
-            let newSlot = this.props.newRes;
-            if (this.props.newRes) {
-                for (let t = newSlot.begin; t <= newSlot.begin + newSlot.duration; t++) {
-                    timeslots.add(t);
-                }
-            }
-            
-            if (timeslots) {
-                timeslots.forEach(receivedTime => {
-                    var time = receivedTime - 1;
-                    availableTime.splice(availableTime.indexOf(time), 1);
-                    for (let j = time; j > time - this.state.duration*2; j--) {
-                        let exclude = this.dateGenerate(j)
-                        excludeTimes.push(exclude);
+            this.getData(getURL).then(data => {
+                timeslots = data.result;
+                let newSlot = this.props.newRes;
+                if (this.props.newRes) {
+                    for (let t = newSlot.begin; t <= newSlot.begin + newSlot.duration; t++) {
+                        timeslots.add(t);
                     }
-                }); 
-            }
-           
-            for (let l = latest; l >= latest - this.state.duration*2; l--) {
-                let exclude = this.dateGenerate(l)
-                excludeTimes.push(exclude);
-            }
+                }
+                
+                if (timeslots) {
+                    timeslots.forEach(receivedTime => {
+                        var time = receivedTime - 1;
+                        availableTime.splice(availableTime.indexOf(time), 1);
+                        for (let j = time; j > time - this.state.duration*2; j--) {
+                            let exclude = this.dateGenerate(j)
+                            excludeTimes.push(exclude);
+                        }
+                    }); 
+                }
+            
+                for (let l = latest; l >= latest - this.state.duration*2; l--) {
+                    let exclude = this.dateGenerate(l)
+                    excludeTimes.push(exclude);
+                }
+            }).catch(err => {
+                console.log(err)
+            })            
         }
 
         return (
@@ -135,25 +140,14 @@ class ReservationForm extends React.Component {
         return exclude;
     }
 
-    getData(url, headerInput) {
-        fetch(url, {
+    getData(url) {
+        console.log(url)
+        return fetch(url, {
             method: 'GET',
             mode: "cors",
-            headers: headerInput, 
+            headers: {'Authorization': localStorage.getItem('auth')}, 
         }).then(resp => {
-            if (resp.ok) {
-                return resp.json();
-            } else {
-                throw new Error(resp.status)
-            }
-        }).then(data => {
-            console.log(data);
-            return data;
-        }).catch(err => {
-            // var errMes = "Oops something might be wrong! We will fix it soon!"
-            console.log(err)
-            // this.setState({errMes});
-            return null;
+           return resp.json()
         })
     }
 
@@ -240,7 +234,6 @@ class ReservationForm extends React.Component {
             startedDate: null,
             startedTime: null,
             duration: 0.5,
-            showSuccessMes: false,
             requestInfo: {}
         })
     }

@@ -1,5 +1,6 @@
 import React from 'react';
 import ReservationForm from '../components/ReservationForm';
+import { Link } from 'react-router-dom';
 
 const host = "https://api.html-summary.me/" //!!change it later
 const reserveURL = host + "/v1/reserve"
@@ -54,6 +55,7 @@ class RoomDetailPage extends React.Component {
                     
                 <h2>Reserve the Room</h2>
                 <ReservationForm newRes={this.props.location.state.newRes} roomName={this.props.location.state.roomInfo.roomName}></ReservationForm>
+                <Link to="/user">Back to User Board</Link>
             </div>
         );
     }
