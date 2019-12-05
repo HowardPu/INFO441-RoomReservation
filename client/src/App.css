@@ -1,0 +1,36 @@
+:root {
+  /* color scheme */
+  --dark-gray: #282c34;
+  --light-gray: #828282;
+  --white: white;
+  
+  background: #282c34;
+}
+
+.App {
+  color: var(--white);
+  background-color: var(--dark-gray);
+
+  min-height: 100vh;
+  margin-top: 5%;
+  margin-bottom: 5%;
+  margin: 10%;
+}
+
+.formContainer {
+  max-width:30vw;
+}
+
+.roomInfoContainer {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.roomInfoItem {
+  margin-right: 10%;
+}
+
+
+.css-2b097c-container {
+  color: var(--dark-gray)
+}

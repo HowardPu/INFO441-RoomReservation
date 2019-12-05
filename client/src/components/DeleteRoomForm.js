@@ -1,0 +1,87 @@
+import React from 'react';
+import Form from 'react-bootstrap/Form'
+import Button from 'react-bootstrap/Button'
+import Alert from 'react-bootstrap/Alert'
+
+
+const host = "https://api.html-summary.me/"
+const delRoomURL = host + "v1/room"
+
+class DeleteRoomForm extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            errMes: '',
+            name: '',
+            notification: ''
+        }
+        this.patchData = this.patchData.bind(this)
+    }
+
+    onChange(e) {
+        this.setState(
+            {
+                notification: '',
+                errMes: ''
+            } 
+        )
+        this.setState({name: e.target.value})
+    }
+
+    onSubmit(e){
+        e.preventDefault();
+        if (!this.state.name) {
+            this.setState({errMes: "Please input room name"})
+        } else {
+            let userInput = {roomName: this.state.name}
+            console.log(userInput)
+            this.patchData(delRoomURL, userInput);
+        }
+    }
+
+    patchData(url, userInput) {
+        fetch(url, {
+            method: 'DELETE',
+            mode: "cors",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': this.props.appState.authToken
+            }, 
+            body: JSON.stringify(userInput)
+        }).then(() => {
+            this.props.setResearch()
+        }).catch(err => {
+            var errMes = err.message
+            console.log(err)
+            this.setState({errMes});
+        })
+    }
+
+
+    render() {
+        return (
+            <section>
+                <h2>Delete Room</h2>
+                {this.state.errMes && <div className="errMes">{this.state.errMes}</div>}
+                <div className="formContainer">
+                    <Form>
+                        <Form.Group controlId="adminDelName">
+                            <Form.Label>Room Name</Form.Label>
+                            <Form.Control 
+                                value={this.state.name}
+                                onChange={(e) => {this.onChange(e)}}
+                                placeholder="Enter Room Name" />
+                        </Form.Group>
+
+                        <Button 
+                            onClick={(e)=>{this.onSubmit(e)}}>
+                            Delete Room
+                        </Button>
+                    </Form>
+                </div>
+            </section>
+        );
+    }
+}
+
+export default DeleteRoomForm;
