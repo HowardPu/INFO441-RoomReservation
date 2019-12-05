@@ -46,7 +46,7 @@ class RoomList extends React.Component {
         }
 
         if (this.state.capacity) {
-            url = url + "&floor=" + this.state.capacity
+            url = url + "&capacity=" + this.state.capacity
         }
 
         let jsonHeader =  {
@@ -57,6 +57,7 @@ class RoomList extends React.Component {
 
 
     onChange(e) {
+        console.log(e.target.id)
         this.setState(
             {
                 notification: '',
@@ -84,7 +85,7 @@ class RoomList extends React.Component {
                     this.setState({errMes: "Capacity must be a number"})    
                     curCapacity = '';
                 } else {
-                    curFloor = e.target.value;
+                    curCapacity = e.target.value;
                 }
                 this.setState({capacity: curCapacity});
                 break;
@@ -146,7 +147,6 @@ class RoomList extends React.Component {
         }
 
         if (this.state.clickReserve && this.state.reserveRoom !== null) {
-            console.log(this.props.message)
             var passState = {
                 roomInfo: this.state.reserveRoom
             };

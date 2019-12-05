@@ -4,10 +4,6 @@ import ReservationList from '../components/ReservationList';
 import { AuthButton } from '../components/AuthButton';
 
 class User extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
 
     render() {
         return (

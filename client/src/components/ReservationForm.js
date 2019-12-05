@@ -170,7 +170,6 @@ class ReservationForm extends React.Component {
         } else {
             let hours = this.state.startedTime.getHours();
             let min = this.state.startedTime.getMinutes() === 30 ? 1 : 0;
-            console.log(hours + " "  + min)
             let beginTime = hours * 2 + min
             let request = {
                 year: this.state.startedDate.getFullYear(),
@@ -183,6 +182,7 @@ class ReservationForm extends React.Component {
 
             this.setState({requestInfo: request})
             console.log(request)
+
             let jsonHeader = {
                 'Content-Type': 'application/json',
                 'Authorization': this.props.appState.authToken
@@ -192,6 +192,8 @@ class ReservationForm extends React.Component {
     }
 
     postData(url, userInput, headerInput) {
+        console.log(url);
+        console.log(headerInput)
         fetch(url, {
             method: 'POST',
             mode: "cors",

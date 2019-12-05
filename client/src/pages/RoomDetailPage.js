@@ -17,9 +17,10 @@ class RoomDetailPage extends React.Component {
     }
 
     componentDidMount() {
+        console.log(this.props.appState.authToken)
         let url = getEquipURL + '?roomname=' + this.props.location.state.roomInfo.roomName;
         let jsonHeader = {
-            'Authorization': this.state.authToken
+            'Authorization': this.props.appState.authToken
         }
         this.getData(url, jsonHeader);    
     }
